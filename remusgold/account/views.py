@@ -200,15 +200,6 @@ class ShippingView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'first_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'last_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'company_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'country': openapi.Schema(type=openapi.TYPE_STRING),
-                'street': openapi.Schema(type=openapi.TYPE_STRING),
-                'house': openapi.Schema(type=openapi.TYPE_STRING),
-                'town': openapi.Schema(type=openapi.TYPE_STRING),
-                'state': openapi.Schema(type=openapi.TYPE_STRING),
-                'zip-code': openapi.Schema(type=openapi.TYPE_NUMBER),
             }),
         responses={200: 'OK'},
     )
@@ -275,15 +266,6 @@ class BillingView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'first_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'last_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'company_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'country': openapi.Schema(type=openapi.TYPE_STRING),
-                'street': openapi.Schema(type=openapi.TYPE_STRING),
-                'house': openapi.Schema(type=openapi.TYPE_STRING),
-                'town': openapi.Schema(type=openapi.TYPE_STRING),
-                'state': openapi.Schema(type=openapi.TYPE_STRING),
-                'zip-code': openapi.Schema(type=openapi.TYPE_NUMBER),
             }),
         responses={200: 'OK'},
     )
