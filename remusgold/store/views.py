@@ -7,7 +7,7 @@ from rest_framework.request import Request
 from rest_framework.decorators import api_view
 
 from remusgold.store.models import Item, Group
-
+from remusgold.settings import ALLOWED_HOSTS
 
 group_response = openapi.Response(
     description='Response with all items in category',
@@ -77,7 +77,7 @@ class GroupView(APIView):
         items = Item.objects.filter(group_id=group_object.id)
 
         for item in items:
-            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
+            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
                 'total_supply':item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price':item.price})
         response_data = {
             'items': item_list,
@@ -97,7 +97,7 @@ class StoreView(APIView):
         item_list = []
         items = Item.objects.all()
         for item in items:
-            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
+            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price})
         response_data = {
             'items': item_list,
@@ -116,7 +116,7 @@ class UniqueView(APIView):
     def get(self, request, id):
         item = Item.objects.get(id=id)
         res_item= {'id': item.id, 'group': item.group.name, 'name': item.name,
-                'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
+                'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + item.images.url,
                 'sold': item.sold, 'price':item.price}
         response_data =res_item
         print('res:', response_data)

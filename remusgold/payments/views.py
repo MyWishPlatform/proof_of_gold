@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 
 from remusgold.payments.models import Payment
 from remusgold.store.models import Item
+from remusgold.settings import ALLOWED_HOSTS
 # Create your views here.
 
 
@@ -78,7 +79,7 @@ class GetSinglePaymentView(APIView):
         payment = Payment.objects.get(id=payment_id)
         item = payment.item
         response_data = {'created_date': payment.created_date, 'item_id': item.id, 'item_name': item.name,
-            'item_image': item.images.path, 'quantity': payment.quantity, 'created_date': payment.created_date}
+            'item_image': ALLOWED_HOSTS[0] + item.images.url, 'quantity': payment.quantity, 'created_date': payment.created_date}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
