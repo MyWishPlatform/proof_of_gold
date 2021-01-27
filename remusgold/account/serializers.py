@@ -19,7 +19,7 @@ class PatchSerializer(serializers.ModelSerializer):
         except KeyError as e:
             print(e)
         for attr, value in validated_data.items():
-            setattr(instance, attParamr, value)
+            setattr(instance, attr, value)
         instance.save()
         return instance
 

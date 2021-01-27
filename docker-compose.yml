@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${DJANGO_PORT}:8000"
+      - "${DOCKER_EXPOSE_PORT?8000}:8000"
     depends_on:
       - db
     networks:
