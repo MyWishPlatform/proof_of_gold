@@ -39,7 +39,7 @@ store_response = openapi.Response(
             'id': openapi.Schema(type=openapi.TYPE_NUMBER),
             'group': openapi.Schema(type=openapi.TYPE_STRING),
             'name': openapi.Schema(type=openapi.TYPE_STRING),
-            'images': openapi.Schema(type=openapi.TYPE_OBJECT),
+            'image': openapi.Schema(type=openapi.TYPE_OBJECT),
             'total_supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
@@ -56,7 +56,7 @@ unique_response = openapi.Response(
             'id': openapi.Schema(type=openapi.TYPE_NUMBER),
             'group': openapi.Schema(type=openapi.TYPE_STRING),
             'name': openapi.Schema(type=openapi.TYPE_STRING),
-            'images': openapi.Schema(type=openapi.TYPE_OBJECT),
+            'image': openapi.Schema(type=openapi.TYPE_OBJECT),
             'total_supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
@@ -77,7 +77,7 @@ class GroupView(APIView):
         items = Item.objects.filter(group_id=group_object.id)
 
         for item in items:
-            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': item.images.path,
+            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
                 'total_supply':item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price':item.price})
         response_data = {
             'items': item_list,
@@ -97,7 +97,7 @@ class StoreView(APIView):
         item_list = []
         items = Item.objects.all()
         for item in items:
-            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': item.images.path,
+            item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price})
         response_data = {
             'items': item_list,
@@ -116,7 +116,8 @@ class UniqueView(APIView):
     def get(self, request, id):
         item = Item.objects.get(id=id)
         res_item= {'id': item.id, 'group': item.group.name, 'name': item.name,
-                'total_supply':item.total_supply, 'supply': item.supply, 'image': item.images.path, 'sold': item.sold, 'price':item.price}
+                'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + '/home/pydaemon/proof_of_gold/proof_of_gold' + item.images.url,
+                'sold': item.sold, 'price':item.price}
         response_data =res_item
         print('res:', response_data)
 

@@ -17,6 +17,8 @@ services:
       - "${DOCKER_EXPOSE_PORT?8000}:8000"
     depends_on:
       - db
+    volumes:
+      - ./media/:/code/media
     networks:
       remusgold-net:
   
