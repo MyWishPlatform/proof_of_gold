@@ -22,6 +22,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework import status
 from rest_framework import permissions
 from remusgold.settings import MEDIA_URL, MEDIA_ROOT
+from django.conf.urls.static import static
 
 schema_view = get_schema_view(
     openapi.Info(
