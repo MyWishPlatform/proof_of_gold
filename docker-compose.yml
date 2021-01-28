@@ -19,6 +19,7 @@ services:
       - db
     volumes:
       - ./media/:/code/media
+      - ./static/:/code/static
     networks:
       remusgold-net:
   
