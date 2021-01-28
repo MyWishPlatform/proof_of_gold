@@ -21,6 +21,7 @@ from drf_yasg import openapi
 from rest_framework.routers import DefaultRouter
 from rest_framework import status
 from rest_framework import permissions
+from remusgold.settings import MEDIA_URL, MEDIA_ROOT
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -34,8 +35,6 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-router = DefaultRouter(trailing_slash=True)
-
 
 
 urlpatterns = [
@@ -45,3 +44,5 @@ urlpatterns = [
     path('api/v1/payments/', include('remusgold.payments.urls')),
     path('api/v1/account/', include('remusgold.account.urls')),
 ]
+
+urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
