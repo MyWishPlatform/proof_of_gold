@@ -61,7 +61,7 @@ class GetPaymentsView(APIView):
         for payment in payments:
             item = payment.item
             payment_list.append({'item_id': item.id, 'item_name': item.name,
-                'item_image': ALLOWED_HOSTS[0] + item.images.url, 'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
+                'item_image': item.images.path, 'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
         response_data = {
             'payments': payment_list,
         }
