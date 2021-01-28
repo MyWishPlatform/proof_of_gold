@@ -33,7 +33,7 @@ SECRET_KEY = 'uo_w3i7*hvw%@)y32ct05pz17q@it8bk8emah=8!as&u64yy3e'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['5.9.121.164', '127.0.0.1', 'devgold.rocknblock.io']
+ALLOWED_HOSTS = [ 'devgold.rocknblock.io', '5.9.121.164', '127.0.0.1']
 
 
 # Application definition
