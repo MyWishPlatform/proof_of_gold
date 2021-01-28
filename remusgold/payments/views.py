@@ -60,8 +60,8 @@ class GetPaymentsView(APIView):
 
         for payment in payments:
             item = payment.item
-            payment_list.append({'created_date': payment.created_date, 'item_id': item.id, 'item_name': item.name,
-                                 'item_image': item.images.path, 'quantity': payment.quantity, 'created_date': payment.created_date})
+            payment_list.append({'item_id': item.id, 'item_name': item.name,
+                'item_image': item.images.path, 'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
         response_data = {
             'payments': payment_list,
         }
@@ -78,8 +78,8 @@ class GetSinglePaymentView(APIView):
     def get(self, request, payment_id):
         payment = Payment.objects.get(id=payment_id)
         item = payment.item
-        response_data = {'created_date': payment.created_date, 'item_id': item.id, 'item_name': item.name,
-            'item_image': ALLOWED_HOSTS[0] + item.images.url, 'quantity': payment.quantity, 'created_date': payment.created_date}
+        response_data = {'item_id': item.id, 'item_name': item.name, 'item_image': ALLOWED_HOSTS[0] + item.images.url,
+                'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -88,28 +88,30 @@ class GetSinglePaymentView(APIView):
 class CreatePaymentView(APIView):
 
     @swagger_auto_schema(
-        operation_description="get single user's payment",
+        operation_description="post user's payments",
         request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['quantity', 'user_id', 'item'],
-            properties={
-                'quantity': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'user_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-            },
-        ),
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Items(type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+                                    'user_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+                                    'quantity': openapi.Schema(type=openapi.TYPE_NUMBER)
+                                }
+                                )),
         responses={200: 'OK'},
     )
     def post(self, request):
         request_data = request.data
-        item_id = request_data.get('item_id')
-        user_id = request_data.get('user_id')
-        quantity = request_data.get('quantity')
-        payment = Payment(user_id=user_id, item_id=item_id, quantity=quantity)
-        payment.save()
-        item = Item.objects.get(id=payment.item_id)
-        item.sold += quantity
-        item.supply -= quantity
-        item.save()
+        print(request_data)
+        for request in request_data:
+            item_id = request.get('item_id')
+            user_id = request.get('user_id')
+            quantity = request.get('quantity')
+            payment = Payment(user_id=user_id, item_id=item_id, quantity=quantity)
+            payment.save()
+            item = Item.objects.get(id=payment.item_id)
+            item.sold += quantity
+            item.supply -= quantity
+            item.save()
 
         return Response('OK', status=status.HTTP_200_OK)
