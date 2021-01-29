@@ -96,6 +96,10 @@ AUTHENTICATION_BACKENDS = [
     'remusgold.accounts.backends.EmailModelBackend'
 ]
 
+USE_X_FORWARDED_HOST = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
