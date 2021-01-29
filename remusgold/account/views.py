@@ -133,9 +133,9 @@ class RegisterView(APIView):
     )
     def post(self, request):
         request_data = request.data
-        username = request_data.get('username')
-        email = request_data.get('email')
-        password = request_data.get('password')
+        username = request_data['username']
+        email = request_data['email']
+        password = request_data['password']
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
         token, created = Token.objects.get_or_create(user=user)
