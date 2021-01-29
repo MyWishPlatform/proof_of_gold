@@ -141,7 +141,7 @@ class RegisterView(APIView):
             email = request_data['email']
             password = request_data['password']
         except:
-            request_data = request.data_init['_content']
+            request_data = request_data_init['_content']
             request_data = json.loads(request_data)
             print(f'request_data: {request_data}')
             username = request_data['username']
