@@ -136,10 +136,9 @@ class RegisterView(APIView):
     def post(self, request):
         request_data_init = request.data
         try:
-            request_data = json.loads(request_data_init)
-            username = request_data['username']
-            email = request_data['email']
-            password = request_data['password']
+            username = request_data_init['username']
+            email = request_data_init['email']
+            password = request_data_init['password']
         except:
             request_data = request_data_init['_content']
             request_data = json.loads(request_data)
