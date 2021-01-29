@@ -9,6 +9,7 @@ from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
 from rest_framework.authtoken.models import Token
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from rest_framework.permissions import IsAuthenticated
+import json
 
 register_response = openapi.Response(
     description="Response with registered user",
@@ -79,8 +80,9 @@ class GetView(APIView):
         operation_description="get single user's info",
         responses={200: get_response},
     )
-    def get(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
         response_data = {'id': user.id, 'username': user.username, 'email': user.email, 'first_name': user.first_name,
             'last_name': user.last_name, 'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id}
@@ -132,10 +134,19 @@ class RegisterView(APIView):
         responses={200: register_response},
     )
     def post(self, request):
-        request_data = request.data
-        username = request_data['username']
-        email = request_data['email']
-        password = request_data['password']
+        request_data_init = request.data
+        try:
+            request_data = json.loads(request_data_init)
+            username = request_data['username']
+            email = request_data['email']
+            password = request_data['password']
+        except:
+            request_data = request.data_init['_content']
+            request_data = json.loads(request_data)
+            print(f'request_data: {request_data}')
+            username = request_data['username']
+            email = request_data['email']
+            password = request_data['password']
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
         token, created = Token.objects.get_or_create(user=user)
@@ -153,8 +164,9 @@ class ShippingView(APIView):
         operation_description="get single user's address",
         responses={200: address_response},
     )
-    def get(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         try:
             shipping_address = user.shipping_address
             response_data = {'first_name': shipping_address.first_name, 'last_name': shipping_address.last_name,
@@ -182,12 +194,13 @@ class ShippingView(APIView):
         }),
         responses={200: address_response},
     )
-    def patch(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def patch(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-        user = AdvUser.objects.get(id=id)
+        user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.shipping_address.first_name, 'last_name': user.shipping_address.last_name,
             'company_name': user.shipping_address.company_name, 'country': user.shipping_address.country, 'street': user.shipping_address.street,
             'house': user.shipping_address.house, 'town': user.shipping_address.town, 'state': user.shipping_address.state, 'zip_code': user.shipping_address.zip_code}
@@ -203,8 +216,9 @@ class ShippingView(APIView):
             }),
         responses={200: 'OK'},
     )
-    def post(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def post(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         user.shipping_address = ShippingAddress()
         user.shipping_address.save()
         user.save()
@@ -219,8 +233,9 @@ class BillingView(APIView):
         operation_description="get single user's address",
         responses={200: address_response},
     )
-    def get(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         try:
             billing_address = user.billing_address
             response_data = {'first_name': billing_address.first_name, 'last_name': billing_address.last_name,
@@ -248,12 +263,13 @@ class BillingView(APIView):
         }),
         responses={200: address_response},
     )
-    def patch(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def patch(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         serializer = PatchBillingAddressSerializer(user.billing_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-        user = AdvUser.objects.get(id=id)
+        user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.billing_address.first_name, 'last_name': user.billing_address.last_name,
             'company_name': user.billing_address.company_name, 'country': user.billing_address.country, 'street': user.billing_address.street,
             'house': user.billing_address.house, 'town': user.billing_address.town, 'state': user.billing_address.state, 'zip_code': user.billing_address.zip_code}
@@ -269,8 +285,9 @@ class BillingView(APIView):
             }),
         responses={200: 'OK'},
     )
-    def post(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def post(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         user.billing_address = BillingAddress()
         user.billing_address.save()
         user.save()
