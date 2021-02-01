@@ -315,4 +315,4 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         user_id = user.id
         username = user.username
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key, 'username': username, 'id':user.id})
+        return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email})
