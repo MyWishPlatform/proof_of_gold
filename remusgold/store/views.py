@@ -65,6 +65,22 @@ unique_response = openapi.Response(
     )
 )
 
+review_response = openapi.Response(
+    description='Response with created review',
+    schema=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'rate': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'body': openapi.Schema(type=openapi.TYPE_STRING),
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
+            'created_at': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
+
 class GroupView(APIView):
 
     @swagger_auto_schema(
@@ -144,18 +160,20 @@ class ReviewView(APIView):
                                     'email': openapi.Schema(type=openapi.TYPE_STRING),
                                 }
                                 )),
-        responses={200: 'OK'},
+        responses={200: review_response},
     )
     def post(self, request):
         print(request)
         request_data = request.data
         print(request_data)
-        item_id = request.get('item_id')
-        rate = request.get('rate')
-        body = request.get('body')
-        name = request.get('name')
-        email = request.get('email')
+        item_id = request_data.get('item_id')
+        rate = request_data.get('rate')
+        body = request_data.get('body')
+        name = request_data.get('name')
+        email = request_data.get('email')
         review = Review(item_id=item_id, rate=rate, body=body, name=name, email = email)
         review.save()
+        response_data = {'id': review.id, 'item_id': review.item_id, 'rate': review.rate, 'body': review.body,
+                         'name': review.name, 'email': review.email, 'created_at': review.created_date}
 
-        return Response('OK', status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
