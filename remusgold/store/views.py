@@ -6,7 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.request import Request
 from rest_framework.decorators import api_view
 
-from remusgold.store.models import Item, Group
+from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
 
 group_response = openapi.Response(
@@ -115,10 +115,46 @@ class UniqueView(APIView):
     )
     def get(self, request, id):
         item = Item.objects.get(id=id)
+        reviews = Review.objects.filter(item=item)
+        review_list = []
+        for review in reviews:
+            review_list.append({'rate': review.rate, 'body': review.body, 'name':review.name, 'email': review.email,
+                                'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
         res_item= {'id': item.id, 'group': item.group.name, 'name': item.name,
                 'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                'sold': item.sold, 'price':item.price}
+                'sold': item.sold, 'price':item.price, 'description': item.description, 'reviews': review_list}
         response_data =res_item
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ReviewView(APIView):
+
+    @swagger_auto_schema(
+        operation_description="post review",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Items(type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+                                    'rate': openapi.Schema(type=openapi.TYPE_NUMBER),
+                                    'body': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'name': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'email': openapi.Schema(type=openapi.TYPE_STRING),
+                                }
+                                )),
+        responses={200: 'OK'},
+    )
+    def post(self, request):
+        request_data = request.data
+        print(request_data)
+        item_id = request.get('item_id')
+        rate = request.get('rate')
+        body = request.get('body')
+        name = request.get('name')
+        email = request.get('email')
+        review = Review(item_id=item_id, rate=rate, body=body, name=name, email = email)
+        review.save()
+
+        return Response('OK', status=status.HTTP_200_OK)
