@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'remusgold.wsgi.application'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'remusgold.accounts.backends.EmailModelBackend'
+    'remusgold.account.backends.EmailModelBackend'
 ]
 
 USE_X_FORWARDED_HOST = True
