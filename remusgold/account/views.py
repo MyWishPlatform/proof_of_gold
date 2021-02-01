@@ -10,6 +10,7 @@ from rest_framework.authtoken.models import Token
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from rest_framework.permissions import IsAuthenticated
 import json
+from rest_framework.authtoken import views
 
 register_response = openapi.Response(
     description="Response with registered user",
@@ -303,3 +304,15 @@ def get_addresses(user):
     except:
         billing_address_id = None
     return shipping_address_id, billing_address_id
+
+
+class ObtainAuthTokenWithId(views.ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        user_id = user.id
+        username = user.username
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key, 'username': username, 'id':id})
