@@ -147,6 +147,7 @@ class ReviewView(APIView):
         responses={200: 'OK'},
     )
     def post(self, request):
+        print(request)
         request_data = request.data
         print(request_data)
         item_id = request.get('item_id')
