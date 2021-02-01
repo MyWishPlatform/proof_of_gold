@@ -314,6 +314,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         user = serializer.validated_data['user']
         user_id = user.id
         username = user.username
+        shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
         return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
