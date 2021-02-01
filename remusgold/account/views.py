@@ -307,7 +307,6 @@ def get_addresses(user):
 
 
 class ObtainAuthTokenWithId(views.ObtainAuthToken):
-
     def post(self, request, *args, **kwargs):
         print('WTF??')
         serializer = self.get_serializer(data=request.data)
