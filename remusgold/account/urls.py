@@ -1,5 +1,5 @@
 from django.urls import path
-from remusgold.account.views import RegisterView, GetView, ShippingView, BillingView, ObtainAuthTokenWithId.as_view()
+from remusgold.account.views import RegisterView, GetView, ShippingView, BillingView, ObtainAuthTokenWithId
 from rest_framework.authtoken import views
 
 
