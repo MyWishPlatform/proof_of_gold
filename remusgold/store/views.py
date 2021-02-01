@@ -150,11 +150,11 @@ class ReviewView(APIView):
         print(request)
         request_data = request.data
         print(request_data)
-        item_id = request.get('item_id')
-        rate = request.get('rate')
-        body = request.get('body')
-        name = request.get('name')
-        email = request.get('email')
+        item_id = request_data.get('item_id')
+        rate = request_data.get('rate')
+        body = request_data.get('body')
+        name = request_data.get('name')
+        email = request_data.get('email')
         review = Review(item_id=item_id, rate=rate, body=body, name=name, email = email)
         review.save()
 
