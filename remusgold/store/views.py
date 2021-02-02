@@ -195,8 +195,9 @@ class SearchView(APIView):
     @swagger_auto_schema(
         operation_description="post search pattern",
         request_body=openapi.Schema(
-            type=openapi.TYPE_STRING
-                                ),
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING),
         responses={200: search_response},
     )
 
@@ -204,7 +205,8 @@ class SearchView(APIView):
         print(request)
         request_data = request.data
         print(request_data)
-        words = request_data.split(' ')
+        words = request_data.get('text')
+        words = words.split(' ')
         items = Item.objects.objects.all()
         for word in words:
             items = items.filter(name__contains=word)
