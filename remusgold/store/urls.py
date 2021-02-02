@@ -5,5 +5,6 @@ urlpatterns = [
     path('<int:id>/', UniqueView.as_view()),
     path('<str:group>/', GroupView.as_view()),
     path('review', ReviewView.as_view()),
+    path('search', SearchView.as_view()),
     path('', StoreView.as_view())
 ]

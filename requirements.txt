@@ -2,6 +2,7 @@ django
 #django-countries
 pillow
 djangorestframework
+django-rest-elasticsearch
 drf-yasg
 psycopg2-binary
 django-cors-headers

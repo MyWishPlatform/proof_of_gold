@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 
 from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
+from rest_framework_elasticsearch import es_views, es_pagination, es_filters
 
 group_response = openapi.Response(
     description='Response with all items in category',
@@ -81,6 +82,19 @@ review_response = openapi.Response(
     )
 )
 
+search_response = openapi.Response(
+    description='Response with search results',
+    schema=openapi.Schema(
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'description': openapi.Schema(type=openapi.TYPE_STRING),
+            'item_images': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    ))
+)
 class GroupView(APIView):
 
     @swagger_auto_schema(
@@ -176,3 +190,27 @@ class ReviewView(APIView):
                          'name': review.name, 'email': review.email, 'created_at': review.created_date}
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+class SearchView(APIView):
+
+    @swagger_auto_schema(
+        operation_description="post search pattern",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_STRING
+                                ),
+        responses={200: search_response},
+    )
+
+    def post(self, request):
+        print(request)
+        request_data = request.data
+        print(request_data)
+        words = request_data.split(' ')
+        items = Item.objects.objects.all()
+        for word in words:
+            items = items.filter(name__contains=word)
+        print(items.__dict__)
+        search_result =[]
+        for item in items:
+            search_result.append({'id': item.id, 'name': item.name, 'description': item.description, 'image': ALLOWED_HOSTS[0] + item.images.url})
+        return Response(search_result, status=status.HTTP_200_OK)
