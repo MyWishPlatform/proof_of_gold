@@ -197,9 +197,9 @@ class SearchView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'text': openapi.Schema(type=openapi.TYPE_STRING),
+                'text': openapi.Schema(type=openapi.TYPE_STRING)}),
         responses={200: search_response},
-    )
+)
 
     def post(self, request):
         print(request)
