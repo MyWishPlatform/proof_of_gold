@@ -8,7 +8,6 @@ from rest_framework.decorators import api_view
 
 from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
-from rest_framework_elasticsearch import es_views, es_pagination, es_filters
 
 group_response = openapi.Response(
     description='Response with all items in category',
