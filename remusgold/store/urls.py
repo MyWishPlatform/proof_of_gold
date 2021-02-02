@@ -1,5 +1,5 @@
 from django.urls import path
-from remusgold.store.views import GroupView, StoreView, UniqueView, ReviewView
+from remusgold.store.views import GroupView, StoreView, UniqueView, ReviewView, SearchView
 
 urlpatterns = [
     path('<int:id>/', UniqueView.as_view()),
