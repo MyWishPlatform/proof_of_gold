@@ -150,16 +150,15 @@ class ReviewView(APIView):
     @swagger_auto_schema(
         operation_description="post review",
         request_body=openapi.Schema(
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_OBJECT,
-                                properties={
-                                    'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'rate': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'body': openapi.Schema(type=openapi.TYPE_STRING),
-                                    'name': openapi.Schema(type=openapi.TYPE_STRING),
-                                    'email': openapi.Schema(type=openapi.TYPE_STRING),
+            type=openapi.TYPE_OBJECT,
+            properties={
+                        'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+                        'rate': openapi.Schema(type=openapi.TYPE_NUMBER),
+                        'body': openapi.Schema(type=openapi.TYPE_STRING),
+                        'name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'email': openapi.Schema(type=openapi.TYPE_STRING),
                                 }
-                                )),
+                                ),
         responses={200: review_response},
     )
     def post(self, request):
