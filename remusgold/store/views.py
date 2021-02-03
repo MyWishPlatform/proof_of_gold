@@ -24,6 +24,9 @@ group_response = openapi.Response(
             'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
             'price': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'description': openapi.Schema(type=openapi.TYPE_STRING),
+            'bonus_coins': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'lucky_prize': openapi.Schema(type=openapi.TYPE_NUMBER)
                    },
         ), },
     ), )
@@ -44,6 +47,9 @@ store_response = openapi.Response(
             'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
             'price': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'description': openapi.Schema(type=openapi.TYPE_STRING),
+            'bonus_coins': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'lucky_prize': openapi.Schema(type=openapi.TYPE_NUMBER)
         },
     ), }, ), )
 )
@@ -61,6 +67,9 @@ unique_response = openapi.Response(
             'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
             'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
             'price': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'description': openapi.Schema(type=openapi.TYPE_STRING),
+            'bonus_coins': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'lucky_prize': openapi.Schema(type=openapi.TYPE_NUMBER)
         },
     )
 )
@@ -88,9 +97,16 @@ search_response = openapi.Response(
         items=openapi.Items(type=openapi.TYPE_OBJECT,
         properties={
             'id': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'group': openapi.Schema(type=openapi.TYPE_STRING),
             'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'image': openapi.Schema(type=openapi.TYPE_OBJECT),
+            'total_supply': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'supply': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'sold': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'price': openapi.Schema(type=openapi.TYPE_NUMBER),
             'description': openapi.Schema(type=openapi.TYPE_STRING),
-            'item_images': openapi.Schema(type=openapi.TYPE_STRING),
+            'bonus_coins': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'lucky_prize': openapi.Schema(type=openapi.TYPE_NUMBER)
         },
     ))
 )
@@ -115,7 +131,7 @@ class GroupView(APIView):
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name,
                               'image': ALLOWED_HOSTS[0] + item.images.url,
                               'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold,
-                              'price': item.price, 'description': item.description, 'reviews': review_list})
+                              'price': item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -142,7 +158,7 @@ class StoreView(APIView):
                      'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
-                    'description': item.description, 'reviews': review_list})
+                    'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -166,7 +182,7 @@ class UniqueView(APIView):
                                 'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
         res_item= {'id': item.id, 'group': item.group.name, 'name': item.name,
                 'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                'sold': item.sold, 'price':item.price, 'description': item.description, 'reviews': review_list}
+                'sold': item.sold, 'price':item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list}
         response_data =res_item
         print('res:', response_data)
 
@@ -236,5 +252,5 @@ class SearchView(APIView):
                      'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             search_result.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
-                    'description': item.description, 'reviews': review_list})
+                    'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         return Response(search_result, status=status.HTTP_200_OK)
