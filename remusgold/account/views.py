@@ -8,6 +8,7 @@ from rest_framework import status
 from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
 from rest_framework.authtoken.models import Token
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
+from django.contrib.auth.password_validation import validate_password, ValidationError, MinimumLengthValidator, CommonPasswordValidator, NumericPasswordValidator, UserAttributeSimilarityValidator
 from rest_framework.permissions import IsAuthenticated
 import json
 from rest_framework.authtoken import views
@@ -110,12 +111,13 @@ class GetView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
-        print(user.username)
-        serializer = PatchSerializer(user, data=request.data, partial=True)
-        print('ser')
-        print(serializer.is_valid())
-        if serializer == 'Password validation error':
+        new_password = request.data.get('new_password')
+        try:
+            validate_password(new_password, password_validators=[MinimumLengthValidator,])
+        except ValidationError:
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+        serializer = PatchSerializer(user, data=request.data, partial=True)
+        if serializer == 'Password validation error':
         if serializer.is_valid():
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
