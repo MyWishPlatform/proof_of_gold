@@ -15,7 +15,8 @@ class PatchSerializer(serializers.ModelSerializer):
                 print(check)
                 if check:
                     new_password = validated_data.pop('new_password')
-                    setattr(instance, 'password', new_password)
+                    hashed_password = make_password(new_password, salt=None, hasher='default')
+                    setattr(instance, 'password', hashed_password)
         except KeyError as e:
             print(e)
         for attr, value in validated_data.items():
