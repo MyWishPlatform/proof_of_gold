@@ -13,6 +13,8 @@ class Item(models.Model):
     name = models.CharField(max_length=300)
     images = models.ImageField(blank=True, upload_to=get_timestamp_path)
     total_supply = models.IntegerField()
+    ducatus_bonus = models.IntegerField()
+    lucky_prize = models.IntegerField()
     supply = models.IntegerField()
     sold = models.IntegerField()
     price = models.FloatField()

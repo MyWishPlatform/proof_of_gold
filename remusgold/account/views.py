@@ -113,11 +113,12 @@ class GetView(APIView):
         shipping_address_id, billing_address_id = get_addresses(user)
         new_password = request.data.get('new_password')
         try:
-            validate_password(new_password, password_validators=[MinimumLengthValidator,])
+            validate_password(new_password, password_validators=[MinimumLengthValidator(min_length=8),])
         except ValidationError:
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+        if new_password.is_alpha():
+            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         serializer = PatchSerializer(user, data=request.data, partial=True)
-        if serializer == 'Password validation error':
         if serializer.is_valid():
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
