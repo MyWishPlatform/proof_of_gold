@@ -228,7 +228,13 @@ class SearchView(APIView):
         print(items.__dict__)
         search_result =[]
         for item in items:
+            reviews = Review.objects.filter(item=item)
+            review_list = []
+            for review in reviews:
+                review_list.append(
+                    {'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
+                     'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             search_result.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
-                    'description': item.description, 'reviews': review_list}})
+                    'description': item.description, 'reviews': review_list})
         return Response(search_result, status=status.HTTP_200_OK)
