@@ -3,6 +3,7 @@ from remusgold.account.models import AdvUser, BillingAddress, ShippingAddress
 
 class PatchSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField()
+    token = serializers.CharField()
     class Meta:
         model = AdvUser
         fields= ('username', 'email', 'first_name', 'last_name', 'password', 'new_password')
