@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import APIView
 from rest_framework import viewsets
 from rest_framework import status
+from rest_framework.decorators import api_view
 from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
 from rest_framework.authtoken.models import Token
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
@@ -160,6 +161,8 @@ class RegisterView(APIView):
         try:
             validate_password(password, password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
         except ValidationError:
+            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+        if password.is_alpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
@@ -333,3 +336,18 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
                          'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
+
+
+@api_view(http_method_names=['GET'])
+def register_activate(request, sign):
+    try:
+        username=signer.unsign(sign)
+    except BadSignature:
+        return render(request, 'main/bad_signature.html')
+    user=get_object_or_404(AdvUser, username=username)
+    if user.is_activated:
+        return Response('already activated', status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        user.is_activated=True
+        user.save()
+    return Response('successfully activated', status=status.HTTP_200_OK)

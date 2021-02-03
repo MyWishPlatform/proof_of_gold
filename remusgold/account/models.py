@@ -7,7 +7,9 @@ from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.core.signing import Signer
 from remusgold.settings import ALLOWED_HOSTS
+from remusgold.templates.email import activation_letter_body
 from rest_framework.authtoken.models import Token
+from django.core.signing import Signer
 
 # Create your models here.
 
@@ -54,18 +56,54 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 
 user_registrated = Signal(providing_args=['instance'])
 
+#MAIL TESTING
+def send_mail(email):
+    connection = get_mail_connection()
+    html_body = activation_html_body.format(
+        tokens_purchased=self.usd_amount,
+    )
+    send_mail(
+        'Registration on Proof of Gold',
+        '',
+        EMAIL_HOST_USER,
+        [email],
+        connection=connection,
+        html_message=html_body,
+        )
+
+
+def get_mail_connection():
+    return get_connection(
+        host=EMAIL_HOST,
+        port=EMAIL_PORT,
+        username=EMAIL_HOST_USER,
+        password=EMAIL_HOST_PASSWORD,
+        use_tls=EMAIL_USE_TLS,
+    )
+
 
 def user_registrated_dispatcher(sender, **kwargs):
     send_activation_notification(kwargs['instance'])
 
 user_registrated.connect(user_registrated_dispatcher)
 
-def send_activation_notification(user):
+def send_activation_notification(id):
+    user = AdvUser.objects.get(id=id)
+    signer = Signer()
     if ALLOWED_HOSTS:
         host='http://'+ALLOWED_HOSTS[0]
     else:
         host='http://localhost:8000'
-    context={'user':user, 'host':host, 'sign':signer.sign(user.username)}
-    subject=render_to_string('email/activation_letter_subject.txt', context)
-    body_text=render_to_string('email/activation_letter_body.txt', context)
-    user.email_user(subject, body_text)
+    full_link = host+'/api/v1/account/register/activate'+signer.sign(user.username)
+    connection = get_mail_connection()
+    html_body = activation_letter_body.format(
+        link=full_link,
+    )
+    send_mail(
+        'Registration on Proof of Gold',
+        '',
+        EMAIL_HOST_USER,
+        [user.email],
+        connection=connection,
+        html_message=html_body,
+        )
