@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from remusgold.account.models import AdvUser, BillingAddress, ShippingAddress
+from django.contrib.auth.hashers import make_password
 
 class PatchSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField()
