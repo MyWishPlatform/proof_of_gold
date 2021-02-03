@@ -7,9 +7,12 @@ from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.core.signing import Signer
 from remusgold.settings import ALLOWED_HOSTS
-from remusgold.templates.email import activation_letter_body
+from remusgold.templates.email.activation_letter_body import voucher_html_body, html_style
 from rest_framework.authtoken.models import Token
 from django.core.signing import Signer
+from django.core.mail import send_mail
+from django.core.mail import get_connection
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 
 # Create your models here.
 
@@ -96,7 +99,7 @@ def send_activation_notification(id):
         host='http://localhost:8000'
     full_link = host+'/api/v1/account/register/activate'+signer.sign(user.username)
     connection = get_mail_connection()
-    html_body = activation_letter_body.format(
+    html_body = voucher_html_body.format(
         link=full_link,
     )
     send_mail(

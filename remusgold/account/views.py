@@ -117,7 +117,7 @@ class GetView(APIView):
             validate_password(new_password, new_password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
         except ValidationError:
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
-        if new_password.is_alpha():
+        if new_password.isalpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -162,7 +162,7 @@ class RegisterView(APIView):
             validate_password(password, password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
         except ValidationError:
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
-        if password.is_alpha():
+        if password.isalpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
