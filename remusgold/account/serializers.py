@@ -3,18 +3,20 @@ from remusgold.account.models import AdvUser, BillingAddress, ShippingAddress
 
 class PatchSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField()
-    token = serializers.CharField()
     class Meta:
         model = AdvUser
         fields= ('username', 'email', 'first_name', 'last_name', 'password', 'new_password')
 
     def update(self, instance, validated_data):
+        print('here', flush= True)
         try:
             if validated_data['password']:
+                print('here1', flush=True)
                 password = validated_data.pop('password')
                 check = instance.check_password(password)
-                print(check)
+                print(check, flush= True)
                 if check:
+                    print('here2', flush=True)
                     new_password = validated_data.pop('new_password')
                     hashed_password = make_password(new_password, salt=None, hasher='default')
                     setattr(instance, 'password', hashed_password)

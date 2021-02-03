@@ -110,9 +110,13 @@ class GetView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
+        print(user.username)
         serializer = PatchSerializer(user, data=request.data, partial=True)
+        print('ser')
+        print(serializer.is_valid)
         if serializer.is_valid():
             serializer.save()
+        user = AdvUser.objects.get(id=token.user_id)
         response_data = {'id': user.id, 'username': user.username, 'email': user.email, 'first_name': user.first_name,
             'last_name': user.last_name, 'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id}
         print('res:', response_data)
