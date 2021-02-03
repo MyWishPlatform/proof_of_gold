@@ -114,6 +114,8 @@ class GetView(APIView):
         serializer = PatchSerializer(user, data=request.data, partial=True)
         print('ser')
         print(serializer.is_valid())
+        if serializer == 'Password validation error':
+            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         if serializer.is_valid():
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
