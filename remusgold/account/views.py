@@ -113,7 +113,7 @@ class GetView(APIView):
         shipping_address_id, billing_address_id = get_addresses(user)
         new_password = request.data.get('new_password')
         try:
-            validate_password(new_password, password_validators=[MinimumLengthValidator(min_length=8),])
+            validate_password(new_password, new_password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
         except ValidationError:
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         if new_password.is_alpha():
@@ -157,6 +157,10 @@ class RegisterView(APIView):
             username = request_data['username']
             email = request_data['email']
             password = request_data['password']
+        try:
+            validate_password(password, password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
+        except ValidationError:
+            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
         token, created = Token.objects.get_or_create(user=user)
