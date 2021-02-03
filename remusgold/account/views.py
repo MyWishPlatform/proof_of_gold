@@ -106,8 +106,9 @@ class GetView(APIView):
         ),
         responses={200: get_response},
     )
-    def patch(self, request, id):
-        user = AdvUser.objects.get(id=id)
+    def patch(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
