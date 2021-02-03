@@ -113,7 +113,7 @@ class GetView(APIView):
         print(user.username)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         print('ser')
-        print(serializer.is_valid)
+        print(serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
