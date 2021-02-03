@@ -160,7 +160,7 @@ USE_TZ = True
 
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_HOST_USER = 'pogtest2@yandex.ru'
-EMAIL_HOST_PASSWORD = 'Qwerty12345!'
+EMAIL_HOST_PASSWORD = 'zdgormmynitydqrj'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

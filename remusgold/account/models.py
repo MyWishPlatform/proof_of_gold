@@ -60,7 +60,7 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 user_registrated = Signal(providing_args=['instance'])
 
 #MAIL TESTING
-def send_mail(email):
+def send_email(email):
     connection = get_mail_connection()
     html_body = activation_html_body.format(
         tokens_purchased=self.usd_amount,
@@ -97,11 +97,14 @@ def send_activation_notification(id):
         host='http://'+ALLOWED_HOSTS[0]
     else:
         host='http://localhost:8000'
-    full_link = host+'/api/v1/account/register/activate'+signer.sign(user.username)
+    full_link = host+'/api/v1/account/register/activate/'+signer.sign(user.username)
+    print(full_link)
     connection = get_mail_connection()
+    print(connection.__dict__)
     html_body = voucher_html_body.format(
         link=full_link,
     )
+    print(html_body)
     send_mail(
         'Registration on Proof of Gold',
         '',

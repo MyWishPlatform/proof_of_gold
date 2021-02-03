@@ -12,7 +12,12 @@ from remusgold.account.serializers import PatchSerializer, PatchShippingAddressS
 from django.contrib.auth.password_validation import validate_password, ValidationError, MinimumLengthValidator, CommonPasswordValidator, NumericPasswordValidator, UserAttributeSimilarityValidator
 from rest_framework.permissions import IsAuthenticated
 import json
+from django.core.signing import Signer
 from rest_framework.authtoken import views
+from django.core.signing import BadSignature
+from django.shortcuts import get_object_or_404
+
+signer = Signer()
 
 register_response = openapi.Response(
     description="Response with registered user",
