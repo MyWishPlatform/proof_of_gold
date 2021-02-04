@@ -364,13 +364,6 @@ def register_activate(request, sign):
         user.save()
     return Response('successfully activated', status=status.HTTP_200_OK)
 
-from django_rest_passwordreset.serializers import EmailSerializer, PasswordTokenSerializer, ResetTokenSerializer
-from django_rest_passwordreset.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
-    get_password_reset_lookup_field
-from rest_framework.generics import GenericAPIView
-from django.utils import timezone
-from datetime import timedelta
-from django_rest_resetpassword.signals import reset_password_token_created
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -380,14 +373,41 @@ from django.core.mail import get_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 from django.conf import settings
 from rest_framework import status, exceptions
+from datetime import timedelta
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password, get_password_validators
+from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
+from django.conf import settings
+from rest_framework import status, serializers, exceptions
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
 
+from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
+from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
+    get_password_reset_lookup_field
+from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
+
+# FROM NOW, I DON'T HAVE ANY FUCKING IDEA WHAT IS HAPPENING HERE, PROCEED ON YOUR OWN RISK
 
 HTTP_USER_AGENT_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_HTTP_USER_AGENT_HEADER', 'HTTP_USER_AGENT')
 HTTP_IP_ADDRESS_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_IP_ADDRESS_HEADER', 'REMOTE_ADDR')
 
+class HttpRes(object):
+    def __init__(self, user=None, **args):
+        self.response = {
+            "status": args.get('status', True),
+            "error": args.get('error', []),
+            "data": args.get('data', []),
+            "message": args.get('message', 'Operation was Successful')
+        }
+
+
 class ResetPasswordRequestToken(GenericAPIView):
     """
     An Api View which provides a method to request a password reset token based on an e-mail address
+
     Sends a signal reset_password_token_created when a reset token was created
     """
     throttle_classes = ()
@@ -403,13 +423,15 @@ class ResetPasswordRequestToken(GenericAPIView):
         password_reset_token_validation_time = get_password_reset_token_expiry_time()
 
         # datetime.now minus expiry hours
-        now_minus_expiry_time = timezone.now() - timedelta(hours=password_reset_token_validation_time)
+        now_minus_expiry_time = timezone.now(
+        ) - timedelta(hours=password_reset_token_validation_time)
 
         # delete all tokens where created_at < now - 24 hours
         clear_expired(now_minus_expiry_time)
 
         # find a user by email address (case insensitive search)
-        users = AdvUser.objects.filter(**{'{}__iexact'.format(get_password_reset_lookup_field()): email})
+        users = AdvUser.objects.filter(
+            **{'{}__iexact'.format(get_password_reset_lookup_field()): email})
 
         active_user_found = False
 
@@ -421,11 +443,11 @@ class ResetPasswordRequestToken(GenericAPIView):
                 active_user_found = True
 
         # No active user found, raise a validation error
-        # but not if DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE == True
-        if not active_user_found and not getattr(settings, 'DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE', False):
+        # but not if DJANGO_REST_RESETPASSWORD_NO_INFORMATION_LEAKAGE == True
+        if not active_user_found and not getattr(settings, 'DJANGO_REST_RESETPASSWORD_NO_INFORMATION_LEAKAGE', False):
             raise exceptions.ValidationError({
                 'email': [_(
-                    "We couldn't find an account associated with that email. Please try a different e-mail address.")],
+                    "There is no active user associated with this e-mail address or the password can not be changed")],
             })
 
         # last but not least: iterate over all users that are active and can change their password
@@ -443,14 +465,21 @@ class ResetPasswordRequestToken(GenericAPIView):
                     # no token exists, generate a new token
                     token = ResetPasswordToken.objects.create(
                         user=user,
-                        user_agent=request.META.get(HTTP_USER_AGENT_HEADER, ''),
-                        ip_address=request.META.get(HTTP_IP_ADDRESS_HEADER, ''),
+                        user_agent=request.META.get(
+                            HTTP_USER_AGENT_HEADER, ''),
+                        ip_address=request.META.get(
+                            HTTP_IP_ADDRESS_HEADER, ''),
                     )
                 # send a signal that the password token was created
                 # let whoever receives this signal handle sending the email for the password reset
-                reset_password_token_created.send(sender=self.__class__, instance=self, reset_password_token=token)
+                reset_password_token_created.send(
+                    sender=self.__class__, instance=self, reset_password_token=token)
         # done
-        return Response({'status': 'OK'})
+        response_format = HttpRes().response
+        response_format['message'] = "A password reset token has been sent to the provided email address"
+        response_format['status'] = True
+        response_format['error'] = []
+        return Response(response_format)
 
 reset_password_request_token = ResetPasswordRequestToken.as_view()
 
