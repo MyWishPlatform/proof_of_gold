@@ -27,6 +27,16 @@ class AdvUser(AbstractUser):
     shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.CASCADE, blank=True, null=True)
 
 
+user_registrated = Signal(providing_args=['instance'])
+
+
+def user_registrated_dispatcher(sender, **kwargs):
+    send_activation_notification(kwargs['instance'])
+
+
+user_registrated.connect(user_registrated_dispatcher)
+
+
 class BillingAddress(models.Model):
     first_name = models.CharField(max_length=20, null=True)
     last_name = models.CharField(max_length=20, null=True)
@@ -54,10 +64,6 @@ class ShippingAddress(models.Model):
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
-
-
-
-user_registrated = Signal(providing_args=['instance'])
 
 #MAIL TESTING
 def send_email(email):
@@ -90,8 +96,8 @@ def user_registrated_dispatcher(sender, **kwargs):
 
 user_registrated.connect(user_registrated_dispatcher)
 
-def send_activation_notification(id):
-    user = AdvUser.objects.get(id=id)
+def send_activation_notification(user):
+    #user = AdvUser.objects.get(id=id)
     signer = Signer()
     if ALLOWED_HOSTS:
         host='http://'+ALLOWED_HOSTS[0]
