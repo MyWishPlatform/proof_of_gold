@@ -490,16 +490,9 @@ reset_password_request_token = ResetPasswordRequestToken.as_view()
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     # send an e-mail to the user
     context = {
-        'current_user': reset_password_token.user,
-        'username': reset_password_token.user.username,
-        'email': reset_password_token.user.email,
-        'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+        'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-validate'), reset_password_token.key)
     }
-
-    # render email text
-    html_body = reset_body.format(
-        reset_password_url=context['reset_password_url'],
-    )
+    email_plaintext_message = context['reset_password_url']
 
     connection = get_mail_connection()
 
@@ -507,14 +500,13 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         # title:
         "Password Reset for {title}".format(title="Proof of Gold"),
         # message:
-        '',
+        email_plaintext_message,
         # from:
         EMAIL_HOST_USER,
         # to:
         [reset_password_token.user.email],
         # connection
         connection=connection,
-        html_message=html_body,
     )
     msg.attach_alternative(email_html_message, "text/html")
     msg.send()

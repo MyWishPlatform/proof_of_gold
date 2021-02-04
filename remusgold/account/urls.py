@@ -10,7 +10,7 @@ app_name = 'reset_password'
 urlpatterns = [
     path('register/', RegisterView.as_view()),
     path('<str:token>/', GetView.as_view()),
-    url(r'^reset/validate_token/', reset_password_validate_token, name="reset-password-validate"),
+    url(r'^reset/validate_token/<str:token>', reset_password_validate_token, name="reset-password-validate"),
     url(r'^reset/confirm/', reset_password_confirm, name="reset-password-confirm"),
     url(r'^reset', reset_password_request_token, name="reset-password-request"),
     path('login', ObtainAuthTokenWithId.as_view()),

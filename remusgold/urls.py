@@ -43,7 +43,7 @@ urlpatterns = [
     path('api/v1/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/v1/store/', include('remusgold.store.urls')),
     path('api/v1/payments/', include('remusgold.payments.urls')),
-    path('api/v1/account/', include('remusgold.account.urls', namespace='reset_password')),
+    path('api/v1/account/', include('remusgold.account.urls', namespace='password_reset')),
 ]
 
 urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
