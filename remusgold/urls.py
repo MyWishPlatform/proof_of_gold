@@ -43,6 +43,7 @@ urlpatterns = [
     path('api/v1/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/v1/store/', include('remusgold.store.urls')),
     path('api/v1/payments/', include('remusgold.payments.urls')),
+    path('api/v1/account/password-reset/', include('django_rest_resetpassword.urls', namespace='password_reset')),
     path('api/v1/account/', include('remusgold.account.urls')),
 ]
 

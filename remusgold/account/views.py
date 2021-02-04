@@ -356,3 +356,28 @@ def register_activate(request, sign):
         user.is_activated=True
         user.save()
     return Response('successfully activated', status=status.HTTP_200_OK)
+
+
+class ResetView(APIView):
+    @swagger_auto_schema(
+        operation_description="reset password",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={200: 'OK'},
+    )
+    def post(self, request):
+        request_data = request.data
+        email = request_data.get('email')
+        user = AdvUser.objects.create_user(username, email, password)
+        user.save()
+        token, created = Token.objects.get_or_create(user=user)
+        print(token)
+        response_data = {'id': user.id, 'username': user.username, 'email': user.email, 'token': token.key}
+        print('res:', response_data)
+
+        return Response(response_data, status=status.HTTP_200_OK)

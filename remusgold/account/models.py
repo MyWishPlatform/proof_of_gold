@@ -27,14 +27,13 @@ class AdvUser(AbstractUser):
     shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.CASCADE, blank=True, null=True)
 
 
-user_registrated = Signal(providing_args=['instance'])
+def user_registrated_dispatcher(sender, instance, created, **kwargs):
+    print('got here')
+    if created:
+        send_activation_notification(instance)
 
 
-def user_registrated_dispatcher(sender, **kwargs):
-    send_activation_notification(kwargs['instance'])
-
-
-user_registrated.connect(user_registrated_dispatcher)
+post_save.connect(user_registrated_dispatcher, sender= AdvUser)
 
 
 class BillingAddress(models.Model):
@@ -90,11 +89,6 @@ def get_mail_connection():
         use_tls=EMAIL_USE_TLS,
     )
 
-
-def user_registrated_dispatcher(sender, **kwargs):
-    send_activation_notification(kwargs['instance'])
-
-user_registrated.connect(user_registrated_dispatcher)
 
 def send_activation_notification(user):
     #user = AdvUser.objects.get(id=id)
