@@ -508,7 +508,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         # connection
         connection=connection,
     )
-    msg.attach_alternative(email_html_message, "text/html")
+    #msg.attach_alternative(email_html_message, "text/html")
     msg.send()
 
 
@@ -541,3 +541,6 @@ class ResetPasswordValidateToken(GenericAPIView):
             return Response({'status': 'expired'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'status': 'OK'})
+
+reset_password_validate_token = ResetPasswordValidateToken.as_view()
+

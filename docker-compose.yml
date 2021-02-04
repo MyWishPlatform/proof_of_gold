@@ -20,9 +20,9 @@ services:
     volumes:
       - ./media/:/code/media
       - ./static/:/code/static
-      - ./remusgold/account:/app/remusgold/account
-      - ./remusgold/payments:/app/remusgold/payments
-      - ./remusgold/store:/app/remusgold/store
+      - ./remusgold/account:/code/remusgold/account
+      - ./remusgold/payments:/code/remusgold/payments
+      - ./remusgold/store:/code/remusgold/store
 
     networks:
       remusgold-net:
