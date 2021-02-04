@@ -389,6 +389,8 @@ from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, 
     get_password_reset_lookup_field
 from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
 
+from remusgold.templates.email.user_reset_password import reset_body
+
 # FROM NOW, I DON'T HAVE ANY FUCKING IDEA WHAT IS HAPPENING HERE, PROCEED ON YOUR OWN RISK
 
 HTTP_USER_AGENT_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_HTTP_USER_AGENT_HEADER', 'HTTP_USER_AGENT')
@@ -495,8 +497,9 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     }
 
     # render email text
-    email_html_message = render_to_string('email/user_reset_password.html', context)
-    email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
+    html_body = reset_body.format(
+        reset_password_url=context['reset_password_url'],
+    )
 
     connection = get_mail_connection()
 
@@ -504,13 +507,14 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         # title:
         "Password Reset for {title}".format(title="Proof of Gold"),
         # message:
-        email_plaintext_message,
+        '',
         # from:
         EMAIL_HOST_USER,
         # to:
         [reset_password_token.user.email],
         # connection
         connection=connection,
+        html_message=html_body,
     )
     msg.attach_alternative(email_html_message, "text/html")
     msg.send()
