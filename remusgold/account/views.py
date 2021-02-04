@@ -17,6 +17,13 @@ from rest_framework.authtoken import views
 from django.core.signing import BadSignature
 from django.shortcuts import get_object_or_404
 
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+from django_rest_resetpassword.signals import reset_password_token_created
+
 signer = Signer()
 
 register_response = openapi.Response(
@@ -357,27 +364,124 @@ def register_activate(request, sign):
         user.save()
     return Response('successfully activated', status=status.HTTP_200_OK)
 
+from django_rest_passwordreset.serializers import EmailSerializer, PasswordTokenSerializer, ResetTokenSerializer
+from django_rest_passwordreset.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
+    get_password_reset_lookup_field
+from rest_framework.generics import GenericAPIView
+from django.utils import timezone
+from datetime import timedelta
+from django_rest_resetpassword.signals import reset_password_token_created
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+from remusgold.account.models import get_mail_connection
+from django.core.mail import get_connection
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+from django.conf import settings
+from rest_framework import status, exceptions
 
-class ResetView(APIView):
-    @swagger_auto_schema(
-        operation_description="reset password",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['email'],
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-        ),
-        responses={200: 'OK'},
+
+HTTP_USER_AGENT_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_HTTP_USER_AGENT_HEADER', 'HTTP_USER_AGENT')
+HTTP_IP_ADDRESS_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_IP_ADDRESS_HEADER', 'REMOTE_ADDR')
+
+class ResetPasswordRequestToken(GenericAPIView):
+    """
+    An Api View which provides a method to request a password reset token based on an e-mail address
+    Sends a signal reset_password_token_created when a reset token was created
+    """
+    throttle_classes = ()
+    permission_classes = ()
+    serializer_class = EmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        # before we continue, delete all existing expired tokens
+        password_reset_token_validation_time = get_password_reset_token_expiry_time()
+
+        # datetime.now minus expiry hours
+        now_minus_expiry_time = timezone.now() - timedelta(hours=password_reset_token_validation_time)
+
+        # delete all tokens where created_at < now - 24 hours
+        clear_expired(now_minus_expiry_time)
+
+        # find a user by email address (case insensitive search)
+        users = AdvUser.objects.filter(**{'{}__iexact'.format(get_password_reset_lookup_field()): email})
+
+        active_user_found = False
+
+        # iterate over all users and check if there is any user that is active
+        # also check whether the password can be changed (is useable), as there could be users that are not allowed
+        # to change their password (e.g., LDAP user)
+        for user in users:
+            if user.eligible_for_reset():
+                active_user_found = True
+
+        # No active user found, raise a validation error
+        # but not if DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE == True
+        if not active_user_found and not getattr(settings, 'DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE', False):
+            raise exceptions.ValidationError({
+                'email': [_(
+                    "We couldn't find an account associated with that email. Please try a different e-mail address.")],
+            })
+
+        # last but not least: iterate over all users that are active and can change their password
+        # and create a Reset Password Token and send a signal with the created token
+        for user in users:
+            if user.eligible_for_reset():
+                # define the token as none for now
+                token = None
+
+                # check if the user already has a token
+                if user.password_reset_tokens.all().count() > 0:
+                    # yes, already has a token, re-use this token
+                    token = user.password_reset_tokens.all()[0]
+                else:
+                    # no token exists, generate a new token
+                    token = ResetPasswordToken.objects.create(
+                        user=user,
+                        user_agent=request.META.get(HTTP_USER_AGENT_HEADER, ''),
+                        ip_address=request.META.get(HTTP_IP_ADDRESS_HEADER, ''),
+                    )
+                # send a signal that the password token was created
+                # let whoever receives this signal handle sending the email for the password reset
+                reset_password_token_created.send(sender=self.__class__, instance=self, reset_password_token=token)
+        # done
+        return Response({'status': 'OK'})
+
+reset_password_request_token = ResetPasswordRequestToken.as_view()
+
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    # send an e-mail to the user
+    context = {
+        'current_user': reset_password_token.user,
+        'username': reset_password_token.user.username,
+        'email': reset_password_token.user.email,
+        'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+    }
+
+    # render email text
+    email_html_message = render_to_string('email/user_reset_password.html', context)
+    email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
+
+    connection = get_mail_connection()
+
+    msg = EmailMultiAlternatives(
+        # title:
+        "Password Reset for {title}".format(title="Proof of Gold"),
+        # message:
+        email_plaintext_message,
+        # from:
+        EMAIL_HOST_USER,
+        # to:
+        [reset_password_token.user.email],
+        # connection
+        connection=connection,
     )
-    def post(self, request):
-        request_data = request.data
-        email = request_data.get('email')
-        user = AdvUser.objects.create_user(username, email, password)
-        user.save()
-        token, created = Token.objects.get_or_create(user=user)
-        print(token)
-        response_data = {'id': user.id, 'username': user.username, 'email': user.email, 'token': token.key}
-        print('res:', response_data)
-
-        return Response(response_data, status=status.HTTP_200_OK)
+    msg.attach_alternative(email_html_message, "text/html")
+    msg.send()

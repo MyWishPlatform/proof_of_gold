@@ -6,4 +6,4 @@ django-rest-elasticsearch
 drf-yasg
 psycopg2-binary
 django-cors-headers
-pip install django-rest-resetpassword
+django-rest-resetpassword
