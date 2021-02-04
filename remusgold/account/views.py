@@ -510,3 +510,34 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     )
     msg.attach_alternative(email_html_message, "text/html")
     msg.send()
+
+
+class ResetPasswordValidateToken(GenericAPIView):
+    """
+    An Api View which provides a method to verify that a token is valid
+    """
+    throttle_classes = ()
+    permission_classes = ()
+    serializer_class = TokenSerializer
+
+    def get(self, request, token):
+        # get token validation time
+        password_reset_token_validation_time = get_password_reset_token_expiry_time()
+
+        # find token
+        reset_password_token = ResetPasswordToken.objects.filter(
+            key=token).first()
+
+        if reset_password_token is None:
+            return Response({'status': 'notfound'}, status=status.HTTP_404_NOT_FOUND)
+
+        # check expiry date
+        expiry_date = reset_password_token.created_at + \
+            timedelta(hours=password_reset_token_validation_time)
+
+        if timezone.now() > expiry_date:
+            # delete expired token
+            reset_password_token.delete()
+            return Response({'status': 'expired'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({'status': 'OK'})
