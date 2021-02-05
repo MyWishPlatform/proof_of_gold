@@ -1,28 +1,46 @@
-from django.contrib.auth import authenticate
+import json
+from datetime import timedelta
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.response import Response
-from rest_framework.decorators import APIView
-from rest_framework import viewsets
-from rest_framework import status
-from rest_framework.decorators import api_view
-from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
-from rest_framework.authtoken.models import Token
-from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
-from django.contrib.auth.password_validation import validate_password, ValidationError, MinimumLengthValidator, CommonPasswordValidator, NumericPasswordValidator, UserAttributeSimilarityValidator
-from rest_framework.permissions import IsAuthenticated
-import json
-from django.core.signing import Signer
 from rest_framework.authtoken import views
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import APIView
+from rest_framework.decorators import api_view
+from rest_framework.authtoken.models import Token
+from rest_framework import status, exceptions
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+
+from django.shortcuts import render
+from django.contrib.auth.password_validation import validate_password, ValidationError, MinimumLengthValidator, NumericPasswordValidator
+from django.contrib.auth import authenticate
+from django.core.signing import Signer
 from django.core.signing import BadSignature
 from django.shortcuts import get_object_or_404
-
+from django_rest_resetpassword.signals import reset_password_token_created
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
-from django.template.loader import render_to_string
 from django.urls import reverse
+from django.core.mail import get_connection
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password, get_password_validators
+from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
+from django.conf import settings
 
-from django_rest_resetpassword.signals import reset_password_token_created
+from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
+from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
+from remusgold.account.models import get_mail_connection
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+
+
+from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
+from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
+    get_password_reset_lookup_field
+from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
+
 
 signer = Signer()
 
@@ -31,10 +49,7 @@ register_response = openapi.Response(
     schema=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'id': openapi.Schema(type=openapi.TYPE_NUMBER),
-            'username': openapi.Schema(type=openapi.TYPE_STRING),
-            'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
-            'token': openapi.Schema(type=openapi.TYPE_STRING),
+            'status': openapi.Schema(type=openapi.TYPE_STRING),
         }
     )
 )
@@ -124,13 +139,15 @@ class GetView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
-        new_password = request.data.get('new_password')
-        try:
-            validate_password(new_password, new_password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
-        except ValidationError:
-            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
-        if new_password.isalpha():
-            return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+        if request.data.get('new_password'):
+            new_password = request.data.get('new_password')
+            try:
+                validate_password(new_password, new_password,
+                                  password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
+            except ValidationError:
+                return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+            if new_password.isalpha():
+                return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -180,7 +197,7 @@ class RegisterView(APIView):
         user.save()
         token, created = Token.objects.get_or_create(user=user)
         print(token)
-        response_data = {'id': user.id, 'username': user.username, 'email': user.email, 'token': token.key}
+        response_data = {'status': 'OK'}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -345,9 +362,12 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
+        if user.is_activated():
+            return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
                          'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
+        else:
+            return Response({'status': 'User is not activated'})
 
 
 @api_view(http_method_names=['GET'])
@@ -362,32 +382,13 @@ def register_activate(request, sign):
     else:
         user.is_activated=True
         user.save()
-    return Response('successfully activated', status=status.HTTP_200_OK)
+        token = Token.objects.get(user_id=user.id)
+        return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
+                     'first_name': user.first_name, 'last_name': user.last_name,
+                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
 
-from django.core.mail import EmailMultiAlternatives
-from django.dispatch import receiver
-from django.template.loader import render_to_string
-from django.urls import reverse
-from remusgold.account.models import get_mail_connection
-from django.core.mail import get_connection
-from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-from django.conf import settings
-from rest_framework import status, exceptions
-from datetime import timedelta
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password, get_password_validators
-from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
-from django.conf import settings
-from rest_framework import status, serializers, exceptions
-from rest_framework.generics import GenericAPIView
-from rest_framework.response import Response
 
-from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
-from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
-    get_password_reset_lookup_field
-from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
+
 
 from remusgold.templates.email.user_reset_password import reset_body
 
