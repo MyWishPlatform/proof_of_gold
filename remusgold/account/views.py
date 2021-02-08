@@ -473,6 +473,17 @@ def register_activate(request, sign):
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
 
 
+@api_view(http_method_names=['POST'])
+def check_code(request):
+    code = request.get('code')
+    token = Token.objects.get(key=token)
+    user = AdvUser.objects.get(id=token.user_id)
+    if code ==user.code:
+        return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
+                         'first_name': user.first_name, 'last_name': user.last_name,
+                         'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id}, status=status.HTTP_200_OK)
+    else:
+        return Response('invalid code', status=status.HTTP_400_BAD_REQUEST)
 
 
 from remusgold.templates.email.user_reset_password import reset_body
