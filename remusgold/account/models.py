@@ -116,13 +116,10 @@ def send_activation_notification(user):
     else:
         host='http://localhost:8000'
     full_link = host+'/api/v1/account/register/activate/'+signer.sign(user.username)
-    print(full_link)
     connection = get_mail_connection()
-    print(connection.__dict__)
     html_body = voucher_html_body.format(
         link=full_link,
     )
-    print(html_body)
     send_mail(
         'Registration on Proof of Gold',
         '',

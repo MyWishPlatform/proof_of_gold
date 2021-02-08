@@ -21,19 +21,22 @@ from django_rest_resetpassword.signals import reset_password_token_created
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
 from django.urls import reverse
-from django.core.mail import get_connection
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password, get_password_validators
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.conf import settings
+from django.core.mail import send_mail
+from django.core.mail import get_connection
 
-from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress
+from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress, get_mail_connection
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from remusgold.account.models import get_mail_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+from remusgold.templates.email.security_letter_body import security_html_body, html_style
 
 
 from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
@@ -260,7 +263,7 @@ class ShippingView(APIView):
             'town': openapi.Schema(type=openapi.TYPE_STRING),
             'county': openapi.Schema(type=openapi.TYPE_STRING),
             'phone': openapi.Schema(type=openapi.TYPE_STRING),
-            'email': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
         }),
         responses={200: address_response},
     )
@@ -329,7 +332,7 @@ class BillingView(APIView):
             'town': openapi.Schema(type=openapi.TYPE_STRING),
             'county': openapi.Schema(type=openapi.TYPE_STRING),
             'phone': openapi.Schema(type=openapi.TYPE_STRING),
-            'email': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
         }),
         responses={200: address_response},
     )
@@ -396,7 +399,22 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         geo = check_ip(ip)
         if geo != user.geolocation or agent != user.agent:
             print(f'suspicious meta: geo {geo}, agent: {agent}')
-            #MAIL SEND
+            code =get_random_string(length=6)
+            user.code = code
+            user.save()
+            connection = get_mail_connection()
+            html_body = security_html_body.format(
+                code=code,
+            )
+            send_mail(
+                'Security Code on Proof of Gold',
+                '',
+                EMAIL_HOST_USER,
+                [user.email],
+                connection=connection,
+                html_message=html_body,
+            )
+
             return Response({'alert': 'security code needed'}, status=status.HTTP_401_UNAUTHORIZED)
         if user.is_activated:
             return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
