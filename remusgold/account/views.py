@@ -92,13 +92,13 @@ address_response = openapi.Response(
         properties={
             'first_name': openapi.Schema(type=openapi.TYPE_STRING),
             'last_name': openapi.Schema(type=openapi.TYPE_STRING),
-            'company_name': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+            'company_name': openapi.Schema(type=openapi.TYPE_STRING),
             'country': openapi.Schema(type=openapi.TYPE_STRING),
-            'street': openapi.Schema(type=openapi.TYPE_STRING),
-            'house': openapi.Schema(type=openapi.TYPE_STRING),
+            'full_address': openapi.Schema(type=openapi.TYPE_STRING),
             'town': openapi.Schema(type=openapi.TYPE_STRING),
-            'state': openapi.Schema(type=openapi.TYPE_STRING),
-            'zip-code': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'county': openapi.Schema(type=openapi.TYPE_STRING),
+            'phone': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
         }
     )
 )
@@ -232,8 +232,8 @@ class ShippingView(APIView):
         try:
             shipping_address = user.shipping_address
             response_data = {'first_name': shipping_address.first_name, 'last_name': shipping_address.last_name,
-                'company_name': shipping_address.company_name, 'country': shipping_address.country, 'street': shipping_address.street,
-                'house': shipping_address.house, 'town': shipping_address.town, 'state': shipping_address.state, 'zip_code': shipping_address.zip_code}
+                'company_name': shipping_address.company_name, 'country': shipping_address.country, 'full_address': shipping_address.full_address,
+                'town': shipping_address.town, 'county': shipping_address.county, 'phone': shipping_address.phone, 'email': shipping_address.email}
             print('res:', response_data)
             return Response(response_data, status=status.HTTP_200_OK)
         except:
@@ -248,11 +248,11 @@ class ShippingView(APIView):
             'last_name': openapi.Schema(type=openapi.TYPE_STRING),
             'company_name': openapi.Schema(type=openapi.TYPE_STRING),
             'country': openapi.Schema(type=openapi.TYPE_STRING),
-            'street': openapi.Schema(type=openapi.TYPE_STRING),
-            'house': openapi.Schema(type=openapi.TYPE_STRING),
+            'full_address': openapi.Schema(type=openapi.TYPE_STRING),
             'town': openapi.Schema(type=openapi.TYPE_STRING),
-            'state': openapi.Schema(type=openapi.TYPE_STRING),
-            'zip-code': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'county': openapi.Schema(type=openapi.TYPE_STRING),
+            'phone': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_NUMBER),
         }),
         responses={200: address_response},
     )
@@ -264,8 +264,8 @@ class ShippingView(APIView):
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.shipping_address.first_name, 'last_name': user.shipping_address.last_name,
-            'company_name': user.shipping_address.company_name, 'country': user.shipping_address.country, 'street': user.shipping_address.street,
-            'house': user.shipping_address.house, 'town': user.shipping_address.town, 'state': user.shipping_address.state, 'zip_code': user.shipping_address.zip_code}
+            'company_name': user.shipping_address.company_name, 'country': user.shipping_address.country, 'full_address': user.shipping_address.full_address,
+            'town': user.shipping_address.town, 'county': user.shipping_address.county, 'phone': user.shipping_address.phone, 'email': user.shipping_address.email}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -301,8 +301,8 @@ class BillingView(APIView):
         try:
             billing_address = user.billing_address
             response_data = {'first_name': billing_address.first_name, 'last_name': billing_address.last_name,
-                'company_name': billing_address.company_name, 'country': billing_address.country, 'street': billing_address.street,
-                'house': billing_address.house, 'town': billing_address.town, 'state': billing_address.state, 'zip_code': billing_address.zip_code}
+                'company_name': billing_address.company_name, 'country': billing_address.country, 'full_address': billing_address.full_address,
+                'town': billing_address.town, 'county': billing_address.county, 'phone': billing_address.phone, 'email': billing_address.email}
             print('res:', response_data)
             return Response(response_data, status=status.HTTP_200_OK)
         except:
@@ -317,11 +317,11 @@ class BillingView(APIView):
             'last_name': openapi.Schema(type=openapi.TYPE_STRING),
             'company_name': openapi.Schema(type=openapi.TYPE_STRING),
             'country': openapi.Schema(type=openapi.TYPE_STRING),
-            'street': openapi.Schema(type=openapi.TYPE_STRING),
-            'house': openapi.Schema(type=openapi.TYPE_STRING),
+            'full_address': openapi.Schema(type=openapi.TYPE_STRING),
             'town': openapi.Schema(type=openapi.TYPE_STRING),
-            'state': openapi.Schema(type=openapi.TYPE_STRING),
-            'zip-code': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'county': openapi.Schema(type=openapi.TYPE_STRING),
+            'phone': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_NUMBER),
         }),
         responses={200: address_response},
     )
@@ -333,8 +333,8 @@ class BillingView(APIView):
             serializer.save()
         user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.billing_address.first_name, 'last_name': user.billing_address.last_name,
-            'company_name': user.billing_address.company_name, 'country': user.billing_address.country, 'street': user.billing_address.street,
-            'house': user.billing_address.house, 'town': user.billing_address.town, 'state': user.billing_address.state, 'zip_code': user.billing_address.zip_code}
+            'company_name': user.billing_address.company_name, 'country': user.billing_address.country, 'full_address': user.billing_address.full_address,
+            'town': user.billing_address.town, 'county': user.billing_address.county, 'phone': user.billing_address.phone, 'email': user.billing_address.email}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -383,6 +383,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
+        print(request.META.get('HTTP_USER_AGENT'))
         ip = get_client_ip(request)
         check_ip(ip)
         if user.is_activated:
