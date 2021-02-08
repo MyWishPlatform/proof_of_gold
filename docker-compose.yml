@@ -23,6 +23,8 @@ services:
       - ./remusgold/account:/code/remusgold/account
       - ./remusgold/payments:/code/remusgold/payments
       - ./remusgold/store:/code/remusgold/store
+      - ./remusgold/vouchers:/code/remusgold/vouchers
+      - ./remusgold/transfers:/code/remusgold/transfers
 
     networks:
       remusgold-net:

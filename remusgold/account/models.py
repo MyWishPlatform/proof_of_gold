@@ -13,7 +13,10 @@ from django.core.signing import Signer
 from django.core.mail import send_mail
 from django.core.mail import get_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+from remusgold.account.api import get_root_key
 
+from bip32utils import BIP32Key
+from eth_keys import keys
 # Create your models here.
 
 
@@ -25,6 +28,18 @@ class AdvUser(AbstractUser):
     last_name = models.CharField(max_length=20, blank=True)
     billing_address = models.OneToOneField('BillingAddress', on_delete=models.CASCADE, blank=True, null=True)
     shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.CASCADE, blank=True, null=True)
+    btc_address = models.CharField(max_length=50, null=True, default=None)
+    eth_address = models.CharField(max_length=50, null=True, default=None)
+
+    def generate_keys(self):
+        eth_btc_root_pub_key = get_root_key()
+        eth_btc_root_key = BIP32Key.fromExtendedKey(eth_btc_root_pub_key, public=True)
+        eth_btc_child_key = eth_btc_root_key.ChildKey(self.id)
+        btc_address = eth_btc_child_key.Address()
+        eth_address = keys.PublicKey(eth_btc_child_key.K.to_string()).to_checksum_address().lower()
+        self.btc_address = btc_address
+        self.eth_address = eth_address
+        self.save()
 
 
 def user_registrated_dispatcher(sender, instance, created, **kwargs):

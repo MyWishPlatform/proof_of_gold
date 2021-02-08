@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view
 
 from remusgold.payments.models import Payment
 from remusgold.store.models import Item
+from remusgold.account.models import AdvUser
+from remusgold.vouchers.models import Voucher
 from remusgold.settings import ALLOWED_HOSTS
 # Create your views here.
 
@@ -103,15 +105,26 @@ class CreatePaymentView(APIView):
     def post(self, request):
         request_data = request.data
         print(request_data)
+        usd_amount = 0
         for request in request_data:
             item_id = request.get('item_id')
             user_id = request.get('user_id')
             quantity = request.get('quantity')
             payment = Payment(user_id=user_id, item_id=item_id, quantity=quantity)
             payment.save()
+
             item = Item.objects.get(id=payment.item_id)
             item.sold += quantity
             item.supply -= quantity
             item.save()
+
+            usd_amount +=item.price * quantity * item.ducatus_bonus/100
+        voucher = Voucher(
+            payment=payment,
+            user=AdvUser.objects.get(id=user_id),
+            usd_amount=usd_amount)
+        voucher.save()
+
+        #SEND MAIL
 
         return Response('OK', status=status.HTTP_200_OK)

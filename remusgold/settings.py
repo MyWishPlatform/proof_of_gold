@@ -55,7 +55,8 @@ INSTALLED_APPS = [
     'remusgold.payments',
     'remusgold.account',
     'remusgold.store',
-
+    'remusgold.vouchers',
+    'remusgold.transfers'
 
 
 
@@ -159,12 +160,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_HOST_USER = 'pogtest2@yandex.ru'
-EMAIL_HOST_PASSWORD = 'zdgormmynitydqrj'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -174,3 +169,9 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+try:
+    from remusgold.settings_local import *
+except ImportError:
+    print('Cannot import local settings', flush=True)

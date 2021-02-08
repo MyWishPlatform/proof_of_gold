@@ -68,7 +68,6 @@ login_response = openapi.Response(
 )
 
 get_response = openapi.Response(
-
     description="Response with user info",
     schema=openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -102,6 +101,19 @@ address_response = openapi.Response(
         }
     )
 )
+
+crypto_response = openapi.Response(
+
+    description="Response with user's crypto addresses",
+    schema=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'eth_address': openapi.Schema(type=openapi.TYPE_STRING),
+            'btc_address': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    )
+)
+
 
 class GetView(APIView):
     #permission_classes = (IsAuthenticated,)
@@ -195,6 +207,9 @@ class RegisterView(APIView):
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
+        user.generate_keys()
+        user.save()
+
         token, created = Token.objects.get_or_create(user=user)
         print(token)
         response_data = {'status': 'OK'}
@@ -353,8 +368,13 @@ def get_addresses(user):
 
 
 class ObtainAuthTokenWithId(views.ObtainAuthToken):
+
+    @swagger_auto_schema(
+        operation_description="user's authentication",
+        responses={200: get_response, 400:'User is not activated'},
+    )
+
     def post(self, request, *args, **kwargs):
-        print('WTF??')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
@@ -362,13 +382,24 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
-        if user.is_activated():
+        if user.is_activated:
             return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
                          'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
         else:
-            return Response({'status': 'User is not activated'})
+            return Response({'status': 'User is not activated'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class GetAddressesView(APIView):
+    @swagger_auto_schema(
+        operation_description="get single user's crypto addresses",
+        responses={200: crypto_response},
+    )
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
+        response_data = {'eth_address': user.eth_address, 'btc_address': user.btc_address}
+        return Response(response_data, status=status.HTTP_200_OK)
 
 @api_view(http_method_names=['GET'])
 def register_activate(request, sign):
@@ -382,7 +413,8 @@ def register_activate(request, sign):
     else:
         user.is_activated=True
         user.save()
-        token = Token.objects.get(user_id=user.id)
+        token, created = Token.objects.get_or_create(user=user)
+        shipping_address_id, billing_address_id = get_addresses(user)
         return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
@@ -491,7 +523,7 @@ reset_password_request_token = ResetPasswordRequestToken.as_view()
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     # send an e-mail to the user
     context = {
-        'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-validate'), reset_password_token.key)
+        'reset_password_url': reset_password_token.key
     }
     email_plaintext_message = context['reset_password_url']
 
