@@ -185,7 +185,7 @@ class RegisterView(APIView):
                 'email': openapi.Schema(type=openapi.TYPE_STRING),
             },
         ),
-        responses={200: register_response},
+        responses={200: register_response, 400: 'Password is not valid'},
     )
     def post(self, request):
         request_data_init = request.data
@@ -380,7 +380,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
 
     @swagger_auto_schema(
         operation_description="user's authentication",
-        responses={200: get_response, 400:'User is not activated'},
+        responses={200: get_response, 400: 'User is not activated', 401: 'security code needed'},
     )
 
     def post(self, request, *args, **kwargs):
@@ -397,6 +397,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         if geo != user.geolocation or agent != user.agent:
             print(f'suspicious meta: geo {geo}, agent: {agent}')
             #MAIL SEND
+            return Response({'alert': 'security code needed'}, status=status.HTTP_401_UNAUTHORIZED)
         if user.is_activated:
             return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
