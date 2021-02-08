@@ -40,6 +40,7 @@ from django_rest_resetpassword.serializers import EmailSerializer, PasswordToken
 from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
     get_password_reset_lookup_field
 from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
+import geoip2.database
 
 
 signer = Signer()
@@ -382,12 +383,37 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
+        ip = get_client_ip(request)
+        check_ip(ip)
         if user.is_activated:
             return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
                          'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
         else:
             return Response({'status': 'User is not activated'}, status=status.HTTP_400_BAD_REQUEST)
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        print(x_forwarded_for)
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+def check_ip(ip):
+    reader = geoip2.database.Reader('./GeoLite2-City.mmdb')
+    response = reader.city(ip)
+    print(response.country.iso_code)
+    print(response.country.name)
+    print(response.country.names['zh-CN'])
+    print(response.subdivisions.most_specific.name)
+    print(response.subdivisions.most_specific.iso_code)
+    print(response.city.name)
+    print(response.postal.code)
+    print(response.location.latitude)
+    print(response.location.longitude)
+    reader.close()
 
 
 class GetAddressesView(APIView):
