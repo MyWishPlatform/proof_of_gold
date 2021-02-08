@@ -206,9 +206,17 @@ class RegisterView(APIView):
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         if password.isalpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+
         user = AdvUser.objects.create_user(username, email, password)
         user.save()
         user.generate_keys()
+        user.save()
+
+        agent = request.META.get('HTTP_USER_AGENT')
+        ip = get_client_ip(request)
+        geo = check_ip(ip)
+        user.agent = agent
+        user.geolocation = geo
         user.save()
 
         token, created = Token.objects.get_or_create(user=user)
@@ -383,9 +391,12 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
-        print(request.META.get('HTTP_USER_AGENT'))
+        agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
-        check_ip(ip)
+        geo = check_ip(ip)
+        if geo != user.geolocation or agent != user.agent:
+            print(f'suspicious meta: geo {geo}, agent: {agent}')
+            #MAIL SEND
         if user.is_activated:
             return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
@@ -407,14 +418,10 @@ def check_ip(ip):
     response = reader.city(ip)
     print(response.country.iso_code)
     print(response.country.name)
-    print(response.country.names['zh-CN'])
-    print(response.subdivisions.most_specific.name)
-    print(response.subdivisions.most_specific.iso_code)
-    print(response.city.name)
-    print(response.postal.code)
-    print(response.location.latitude)
-    print(response.location.longitude)
+    city = response.city.name
+
     reader.close()
+    return city
 
 
 class GetAddressesView(APIView):

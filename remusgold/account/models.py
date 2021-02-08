@@ -30,6 +30,9 @@ class AdvUser(AbstractUser):
     shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.CASCADE, blank=True, null=True)
     btc_address = models.CharField(max_length=50, null=True, default=None)
     eth_address = models.CharField(max_length=50, null=True, default=None)
+    agent = models.CharField(max_length=150, default=None)
+    geolocation = models.CharField(max_length=150, default=None)
+
 
     def generate_keys(self):
         eth_btc_root_pub_key = get_root_key()
