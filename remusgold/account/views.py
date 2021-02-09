@@ -270,6 +270,9 @@ class ShippingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
+        user.billing_address = ShippingAddress()
+        user.billing_address.save()
+        user.save()
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -279,23 +282,6 @@ class ShippingView(APIView):
             'town': user.shipping_address.town, 'county': user.shipping_address.county, 'phone': user.shipping_address.phone, 'email': user.shipping_address.email}
         print('res:', response_data)
 
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(
-        operation_description="creat single user's address",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-            }),
-        responses={200: 'OK'},
-    )
-    def post(self, request, token):
-        token = Token.objects.get(key=token)
-        user = AdvUser.objects.get(id=token.user_id)
-        user.shipping_address = ShippingAddress()
-        user.shipping_address.save()
-        user.save()
-        response_data = {'OK'}
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -339,6 +325,9 @@ class BillingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
+        user.billing_address = BillingAddress()
+        user.billing_address.save()
+        user.save()
         serializer = PatchBillingAddressSerializer(user.billing_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -350,22 +339,6 @@ class BillingView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(
-        operation_description="creat single user's address",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-            }),
-        responses={200: 'OK'},
-    )
-    def post(self, request, token):
-        token = Token.objects.get(key=token)
-        user = AdvUser.objects.get(id=token.user_id)
-        user.billing_address = BillingAddress()
-        user.billing_address.save()
-        user.save()
-        response_data = {'OK'}
-        return Response(response_data, status=status.HTTP_200_OK)
 
 def get_addresses(user):
     try:
@@ -475,16 +448,26 @@ def register_activate(request, sign):
 
 @api_view(http_method_names=['POST'])
 def check_code(request):
-    code = request.get('code')
+    request_data = request.data
+    code = request_data.get('code')
+    token = request_data.get('token')
     token = Token.objects.get(key=token)
     user = AdvUser.objects.get(id=token.user_id)
-    if code ==user.code:
-        return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
-                         'first_name': user.first_name, 'last_name': user.last_name,
-                         'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id}, status=status.HTTP_200_OK)
+    shipping_address_id, billing_address_id = get_addresses(user)
+    if code == user.code:
+        user.code = None
+        agent = request.META.get('HTTP_USER_AGENT')
+        ip = get_client_ip(request)
+        geo = check_ip(ip)
+        user.geolocation = geo
+        user.agent = agent
+        user.save()
+        return Response({'token': token.key, 'username': user.username, 'id': user.id, 'email': user.email,
+                     'first_name': user.first_name, 'last_name': user.last_name,
+                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
+                    status=status.HTTP_200_OK)
     else:
         return Response('invalid code', status=status.HTTP_400_BAD_REQUEST)
-
 
 from remusgold.templates.email.user_reset_password import reset_body
 

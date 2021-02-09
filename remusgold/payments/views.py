@@ -6,7 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.request import Request
 from rest_framework.decorators import api_view
 
-from remusgold.payments.models import Payment
+from remusgold.payments.models import Payment, Order
 from remusgold.store.models import Item
 from remusgold.account.models import AdvUser
 from remusgold.vouchers.models import Voucher
@@ -106,13 +106,19 @@ class CreatePaymentView(APIView):
         request_data = request.data
         print(request_data)
         usd_amount = 0
+        order = Order(user_id=user_id)
+        order.save()
         for request in request_data:
             item_id = request.get('item_id')
             user_id = request.get('user_id')
             quantity = request.get('quantity')
-            payment = Payment(user_id=user_id, item_id=item_id, quantity=quantity)
+            payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()
 
+
+        order.get_required_amount()
+            #AFTER CONFIRMATION
+        '''
             item = Item.objects.get(id=payment.item_id)
             item.sold += quantity
             item.supply -= quantity
@@ -126,5 +132,6 @@ class CreatePaymentView(APIView):
         voucher.save()
 
         #SEND MAIL
+        '''
 
         return Response('OK', status=status.HTTP_200_OK)

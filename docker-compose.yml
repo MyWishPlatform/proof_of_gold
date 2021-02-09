@@ -25,7 +25,34 @@ services:
       - ./remusgold/store:/code/remusgold/store
       - ./remusgold/vouchers:/code/remusgold/vouchers
       - ./remusgold/transfers:/code/remusgold/transfers
-
+    networks:
+      remusgold-net:
+  receiver:
+    build:
+      context: .
+      dockerfile: dockerfiles/receiver.Dockerfile
+    depends_on:
+      - db
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      remusgold-net:
+  scanner:
+    build:
+      context: .
+      dockerfile: dockerfiles/scanner.Dockerfile
+    depends_on:
+      - db
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      remusgold-net:
+    volumes:
+      - ./scanner/settings:/code/scanner/settings
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    env_file: .env
+    restart: unless-stopped
     networks:
       remusgold-net:
   
