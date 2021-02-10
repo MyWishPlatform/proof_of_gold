@@ -14,7 +14,7 @@ class Item(models.Model):
     images = models.ImageField(blank=True, upload_to=get_timestamp_path)
     total_supply = models.IntegerField()
     ducatus_bonus = models.IntegerField()
-    lucky_prize = models.IntegerField()
+    lucky_prize = models.FloatField()
     supply = models.IntegerField()
     sold = models.IntegerField()
     price = models.FloatField()

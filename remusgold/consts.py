@@ -7,3 +7,5 @@ DECIMALS = {
     'USDC': 10 ** 6,
     'USD': 10 ** 2,
 }
+
+SUPPORTED_CURRENCIES = DECIMALS.keys()

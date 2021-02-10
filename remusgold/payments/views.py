@@ -58,15 +58,16 @@ class GetPaymentsView(APIView):
     )
     def get(self, request, user_id):
         payment_list = []
-        payments = Payment.objects.filter(user_id=user_id)
+        orders = Order.objects.filter(user_id=user_id).filter(status='PAID')
+        for order in orders:
+            payments = Payment.objects.filter(order=order)
 
-        for payment in payments:
-            item = payment.item
-            payment_list.append({'item_id': item.id, 'item_name': item.name,
+            for payment in payments:
+                item = payment.item
+                payment_list.append({'item_id': item.id, 'item_name': item.name,
                 'item_image': ALLOWED_HOSTS[0] + item.images.url, 'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
-        response_data = {
-            'payments': payment_list,
-        }
+
+        response_data = {'payments': payment_list,}
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -115,23 +116,6 @@ class CreatePaymentView(APIView):
             payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()
 
-
         order.get_required_amount()
-            #AFTER CONFIRMATION
-        '''
-            item = Item.objects.get(id=payment.item_id)
-            item.sold += quantity
-            item.supply -= quantity
-            item.save()
-
-            usd_amount +=item.price * quantity * item.ducatus_bonus/100
-        voucher = Voucher(
-            payment=payment,
-            user=AdvUser.objects.get(id=user_id),
-            usd_amount=usd_amount)
-        voucher.save()
-
-        #SEND MAIL
-        '''
 
         return Response('OK', status=status.HTTP_200_OK)

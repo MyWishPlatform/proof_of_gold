@@ -54,7 +54,8 @@ class Receiver(threading.Thread):
 
     def payment(self, message):
         print('PAYMENT MESSAGE RECEIVED', flush=True)
-        parse_payment_message(message)
+        result = parse_payment_message(message)
+        print(result)
 
     def callback(self, ch, method, properties, body):
         print('received', body, properties, method, flush=True)
