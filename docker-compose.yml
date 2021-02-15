@@ -37,6 +37,15 @@ services:
     restart: unless-stopped
     networks:
       remusgold-net:
+  rates_checker:
+    build:
+      context: .
+      dockerfile: dockerfiles/rates_checker.Dockerfile
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      remusgold-net:
   scanner:
     build:
       context: .
