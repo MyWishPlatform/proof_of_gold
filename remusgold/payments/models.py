@@ -2,6 +2,7 @@ from django.db import models
 from remusgold.store.models import Item
 from remusgold.account.models import AdvUser
 from remusgold.consts import MAX_AMOUNT_LEN
+from remusgold.rates.api import get_usd_prices
 from django.utils.timezone import now
 from datetime import timedelta
 
@@ -11,6 +12,9 @@ class Order(models.Model):
     user = models.ForeignKey('account.AdvUser', on_delete=models.CASCADE)
     required_usd_amount = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=2, null=True, blank=True)
     received_usd_amount = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=2, default=0)
+    fixed_btc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
+    fixed_eth_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
+    fixed_usdc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
     status = models.CharField(max_length=50, default='WAITING_FOR_PAYMENT')
     created_date = models.DateTimeField(auto_now_add=True)
     time_to_live = models.IntegerField(default=3*60*60)
@@ -32,6 +36,13 @@ class Order(models.Model):
         if self.status not in ('UNDERPAYMENT', 'WAITING_FOR_PAYMENT'):
             return False
         return now() - self.created_at < timedelta(seconds=self.time_to_live)
+
+    def fix_rates(self):
+        usd_prices = get_usd_prices()
+        self.fixed_btc_rate = usd_prices['BTC']
+        self.fixed_eth_rate = usd_prices['ETH']
+        self.fixed_usdc_rate = usd_prices['USDC']
+        self.save()
 
 
 class Payment(models.Model):

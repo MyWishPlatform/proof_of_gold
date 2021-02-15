@@ -117,5 +117,6 @@ class CreatePaymentView(APIView):
             payment.save()
 
         order.get_required_amount()
+        order.fix_rates()
 
         return Response('OK', status=status.HTTP_200_OK)

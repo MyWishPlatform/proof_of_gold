@@ -3,44 +3,70 @@ from remusgold.account.models import AdvUser
 from remusgold.store.models import Item
 from remusgold.vouchers.models import Voucher
 from remusgold.consts import DECIMALS
+from remusgold.transfers.api import eth_return_transfer, btc_return_transfer, usdc_return_transfer
+
 
 class TransferException(Exception):
     pass
 
 def parse_payment_message(message):
     #FINDING ORDER
-    order = Order.objects.filter(user_id=message['userID']).filter(status__in=('WAITING_FOR_PAYMENT', 'UNDERPAYMENT'))
-    if not order:
+    orders = Order.objects.filter(user_id=message['userID']).filter(status__in=('WAITING_FOR_PAYMENT', 'UNDERPAYMENT'))
+
+    if not orders:
         return 'Order not found'
+    for order in orders:
+        if order.is_active():
+            active_order=order
+            break
+    if not active_order:
+        print('Active order not found, cancelling payment checker')
     payment_usd_amount = message['amount'] / DECIMALS(message['currency']) #RATES
     #RATES!!!!
-    order.received_usd_amount += payment_usd_amount
-    if order.received_usd_amount < 0.995 * order.required_usd_amount:
-        #UNDERPAYMENT LOGIC
+    active_order.received_usd_amount += payment_usd_amount
+    if active_order.received_usd_amount < 0.995 * active_order.required_usd_amount:
+        active_order.status = 'UNDERPAYMENT'
+        active_order.save()
+        #ANY MESSAGES TO USER?
         return 'underpayment'
+    elif active_order.received_usd_amount > 1.05 * active_order.required_usd_amount:
+        process_correct_payment(active_order)
+        process_overpayment(active_order, message)
+        return 'overpayment'
     else:
-        order.status = "PAID"
-        order.save()
-        payments = Payment.objects.filter(order=order)
-        usd_amount = 0
-        for payment in payments:
-            item = Item.objects.get(id=payment.item_id)
-            item.sold += payment.quantity
-            item.supply -= payment.quantity
-            item.save()
-
-            usd_amount += item.price * payment.quantity * item.ducatus_bonus/100
-
-        voucher = Voucher(
-            payment=payments[0],
-            user=AdvUser.objects.get(id=message['userID']),
-            usd_amount=usd_amount)
-        voucher.save()
-
-        #SEND MAIL
+        process_correct_payment(active_order)
         return 'correct payment'
 
+def process_correct_payment(active_order):
+    active_order.status = "PAID"
+    active_order.save()
+    payments = Payment.objects.filter(order=active_order)
+    usd_amount = 0
+    for payment in payments:
+        item = Item.objects.get(id=payment.item_id)
+        item.sold += payment.quantity
+        item.supply -= payment.quantity
+        item.save()
 
-    if order.received_usd_amount > 1.05 * order.required_usd_amount:
-        #OVERPAYMENT LOGIC
-        return 'overpayment'
+        usd_amount += item.price * payment.quantity * item.ducatus_bonus / 100
+
+    voucher = Voucher(
+        payment=payments[0],
+        user=AdvUser.objects.get(id=active_order.user_id),
+        usd_amount=usd_amount)
+    voucher.save()
+
+    # SEND MAIL
+
+def process_overpayment(active_order, message):
+    delta = active_order.received_usd_amount - active_order.required_us_amount
+    currency = active_order.currency
+    if currency == 'ETH':
+        return_transfer = eth_return_transfer(active_order, delta, message)
+    if currency == 'USDC':
+        pass
+        #return_transfer = usdc_return_transfer()
+    if currency == 'BTC':
+        pass
+        #return_transfer = btc_return_transfer()
+
