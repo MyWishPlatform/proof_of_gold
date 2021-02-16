@@ -8,5 +8,5 @@ Base = automap_base()
 engine = create_engine(mywish_pg_engine)
 Base.prepare(engine, reflect=True)
 
-AdvUser = Base.classes.account.advuser
+AdvUser = Base.classes.account_advuser
 session = Session(engine)

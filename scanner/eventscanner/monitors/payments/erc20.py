@@ -45,9 +45,10 @@ class ERC20PaymentMonitor:
                 continue
 
             message = {
-                'exchangeId': model.id,
+                'userID': model.id,
                 "transactionHash": tx.tx_hash,
                 "address": model.eth_address,
+                "from_address": tx.inputs[0],
                 "amount": tokens_amount,
                 "currency": token_name,
                 "status": "COMMITTED",

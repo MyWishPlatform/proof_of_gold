@@ -41,8 +41,9 @@ class EthPaymentMonitor:
                 tx_receipt = block_event.network.get_tx_receipt(transaction.tx_hash)
 
                 message = {
-                    'exchangeId': model.id,
+                    'userID': model.id,
                     'address': address,
+                    "from_address": transaction.inputs[0],
                     'transactionHash': transaction.tx_hash,
                     'currency': cls.currency,
                     'amount': transaction.outputs[0].value,
@@ -51,10 +52,3 @@ class EthPaymentMonitor:
                 }
 
                 send_to_backend(cls.event_type, cls.queue, message)
-
-
-class DucxPaymentMonitor(EthPaymentMonitor):
-    network_types = ['DUCATUSX_MAINNET']
-    queue = NETWORKS[network_types[0]]['queue']
-
-    currency = 'DUCX'

@@ -4,10 +4,10 @@ import json
 
 def send_to_backend(type, queue, message):
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        'localhost',
+        'rabbitmq',
         5672,
-        'ducatus_exchange',
-        pika.PlainCredentials('ducatus_exchange', 'ducatus_exchange'),
+        'remusgold',
+        pika.PlainCredentials('remusgold', 'remusgold'),
     ))
     channel = connection.channel()
     channel.queue_declare(queue=queue, durable=True, auto_delete=False,

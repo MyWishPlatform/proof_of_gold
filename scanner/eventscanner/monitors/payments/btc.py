@@ -38,7 +38,7 @@ class BTCPaymentMonitor:
                         continue
 
                     message = {
-                        'exchangeId': model.id,
+                        'userId': model.id,
                         'address': address,
                         'transactionHash': transaction.tx_hash,
                         'currency': cls.currency,
@@ -48,10 +48,3 @@ class BTCPaymentMonitor:
                     }
 
                     send_to_backend(cls.event_type, cls.queue, message)
-
-
-class DucPaymentMonitor(BTCPaymentMonitor):
-    network_types = ['DUCATUS_MAINNET']
-    queue = NETWORKS[network_types[0]]['queue']
-
-    currency = 'DUC'
