@@ -4,8 +4,8 @@ DECIMALS = {
     'ETH': 10 ** 18,
     'BTC': 10 ** 8,
     'DUC': 10 ** 8,
-    'USDC': 10 ** 6,
+    'USDT': 10 ** 6,
     'USD': 10 ** 2,
 }
 
-SUPPORTED_CURRENCIES = DECIMALS.keys()
+SUPPORTED_CURRENCIES = ['ETH', 'BTC', 'USDT']

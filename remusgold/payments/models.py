@@ -12,12 +12,13 @@ class Order(models.Model):
     user = models.ForeignKey('account.AdvUser', on_delete=models.CASCADE)
     required_usd_amount = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=2, null=True, blank=True)
     received_usd_amount = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=2, default=0)
-    fixed_btc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
-    fixed_eth_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
-    fixed_usdc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8)
+    fixed_btc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8, null=True)
+    fixed_eth_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8, null=True)
+    fixed_usdc_rate = models.DecimalField(max_digits=MAX_AMOUNT_LEN, decimal_places=8, null=True)
     status = models.CharField(max_length=50, default='WAITING_FOR_PAYMENT')
     created_date = models.DateTimeField(auto_now_add=True)
     time_to_live = models.IntegerField(default=3*60*60)
+    currency = models.CharField(max_length=10, default='')
 
     def get_required_amount(self):
         payments = Payment.objects.filter(order=self)
@@ -35,13 +36,14 @@ class Order(models.Model):
         """
         if self.status not in ('UNDERPAYMENT', 'WAITING_FOR_PAYMENT'):
             return False
-        return now() - self.created_at < timedelta(seconds=self.time_to_live)
+        return now() - self.created_date < timedelta(seconds=self.time_to_live)
 
     def fix_rates(self):
         usd_prices = get_usd_prices()
+        print(usd_prices)
         self.fixed_btc_rate = usd_prices['BTC']
         self.fixed_eth_rate = usd_prices['ETH']
-        self.fixed_usdc_rate = usd_prices['USDC']
+        self.fixed_usdc_rate = usd_prices['USDT']
         self.save()
 
 

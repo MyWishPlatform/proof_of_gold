@@ -7,7 +7,7 @@ from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.core.signing import Signer
 from remusgold.settings import ALLOWED_HOSTS
-from remusgold.templates.email.activation_letter_body import voucher_html_body, html_style
+from remusgold.templates.email.activation_letter_body import activation_body, activation_style
 from rest_framework.authtoken.models import Token
 from django.core.signing import Signer
 from django.core.mail import send_mail
@@ -112,14 +112,10 @@ def get_mail_connection():
 def send_activation_notification(user):
     #user = AdvUser.objects.get(id=id)
     signer = Signer()
-    if ALLOWED_HOSTS:
-        host='http://'+ALLOWED_HOSTS[0]
-    else:
-        host='http://localhost:8000'
-    full_link = host+'/api/v1/account/register/activate/'+signer.sign(user.username)
+    token=signer.sign(user.username)
     connection = get_mail_connection()
-    html_body = voucher_html_body.format(
-        link=full_link,
+    html_body = activation_body.format(
+        token=token,
     )
     send_mail(
         'Registration on Proof of Gold',
@@ -127,5 +123,5 @@ def send_activation_notification(user):
         EMAIL_HOST_USER,
         [user.email],
         connection=connection,
-        html_message=html_body,
+        html_message=activation_style + html_body,
         )

@@ -31,12 +31,15 @@ from django.utils.crypto import get_random_string
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.mail import get_connection
+from django.db import IntegrityError
+from django.contrib.auth.hashers import check_password
 
 from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress, get_mail_connection
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from remusgold.account.models import get_mail_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-from remusgold.templates.email.security_letter_body import security_html_body, html_style
+from remusgold.templates.email.security_letter_body import security_body, security_style
+from remusgold.templates.email.password_letter_body import password_body, password_style
 
 
 from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
@@ -152,18 +155,38 @@ class GetView(APIView):
         responses={200: get_response},
     )
     def patch(self, request, token):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        if username:
+            if (AdvUser.objects.filter(username=username)):
+                response_data = {'username': 'occupied'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        if email:
+            if (AdvUser.objects.filter(email=email)):
+                response_data = {'email': 'occupied'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
+        password = request.data.get('password')
+        print(password, flush=True)
+        token = Token.objects.get(key=token)
+        true_password = AdvUser.objects.get(id=token.user_id).password
+        check = check_password(password, true_password)
+        print(f'check: {check}', flush=True)
+        if  not check:
+            response_data = 'password is invalid'
+            return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+        request.data.pop('password')
         if request.data.get('new_password'):
             new_password = request.data.get('new_password')
             try:
                 validate_password(new_password, new_password,
                                   password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
             except ValidationError:
-                return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+                return Response('new password is not valid', status=status.HTTP_401_UNAUTHORIZED)
             if new_password.isalpha():
-                return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+                return Response('new password is not valid', status=status.HTTP_401_UNAUTHORIZED)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -174,6 +197,12 @@ class GetView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+def is_unique(field, item):
+    print(field, item)
+    if (AdvUser.objects.filter(field=item)):
+        return False
+    else:
+        return True
 
 class RegisterView(APIView):
 
@@ -210,14 +239,21 @@ class RegisterView(APIView):
         if password.isalpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
 
-        user = AdvUser.objects.create_user(username, email, password)
-        user.save()
+        try:
+            user = AdvUser.objects.create_user(username, email, password)
+            user.save()
+        except IntegrityError:
+            response_data = {'username or email already occupied'}
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         user.generate_keys()
         user.save()
 
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
-        geo = check_ip(ip)
+        if ip[0:3] != '172':
+            geo = check_ip(ip)
+        else:
+            geo = 'local'
         user.agent = agent
         user.geolocation = geo
         user.save()
@@ -369,6 +405,15 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         token, created = Token.objects.get_or_create(user=user)
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
+        if ip[:3] == '172':
+            if user.is_activated:
+                return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
+                             'first_name': user.first_name, 'last_name': user.last_name,
+                             'billing_address_id': billing_address_id,
+                             'shipping_adress_id': shipping_address_id})
+            else:
+                return Response({'status': 'User is not activated'}, status=status.HTTP_400_BAD_REQUEST)
+
         geo = check_ip(ip)
         if geo != user.geolocation or agent != user.agent:
             print(f'suspicious meta: geo {geo}, agent: {agent}')
@@ -376,8 +421,8 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
             user.code = code
             user.save()
             connection = get_mail_connection()
-            html_body = security_html_body.format(
-                code=code,
+            html_body = security_body.format(
+                account=user.username, code=code,
             )
             send_mail(
                 'Security Code on Proof of Gold',
@@ -385,7 +430,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
                 EMAIL_HOST_USER,
                 [user.email],
                 connection=connection,
-                html_message=html_body,
+                html_message= security_style + html_body,
             )
 
             return Response({'alert': 'security code needed'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -468,8 +513,6 @@ def check_code(request):
                     status=status.HTTP_200_OK)
     else:
         return Response('invalid code', status=status.HTTP_400_BAD_REQUEST)
-
-from remusgold.templates.email.user_reset_password import reset_body
 
 # FROM NOW, I DON'T HAVE ANY FUCKING IDEA WHAT IS HAPPENING HERE, PROCEED ON YOUR OWN RISK
 
@@ -555,7 +598,7 @@ class ResetPasswordRequestToken(GenericAPIView):
                 # send a signal that the password token was created
                 # let whoever receives this signal handle sending the email for the password reset
                 reset_password_token_created.send(
-                    sender=self.__class__, instance=self, reset_password_token=token)
+                    sender=self.__class__, instance=self, reset_password_token=token, username = user.username, email = user.email)
         # done
         response_format = HttpRes().response
         response_format['message'] = "A password reset token has been sent to the provided email address"
@@ -567,29 +610,21 @@ reset_password_request_token = ResetPasswordRequestToken.as_view()
 
 
 @receiver(reset_password_token_created)
-def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+def password_reset_token_created(sender, instance, reset_password_token, username, email, *args, **kwargs):
     # send an e-mail to the user
-    context = {
-        'reset_password_url': reset_password_token.key
-    }
-    email_plaintext_message = context['reset_password_url']
-
+    token = reset_password_token.key
     connection = get_mail_connection()
-
-    msg = EmailMultiAlternatives(
-        # title:
-        "Password Reset for {title}".format(title="Proof of Gold"),
-        # message:
-        email_plaintext_message,
-        # from:
-        EMAIL_HOST_USER,
-        # to:
-        [reset_password_token.user.email],
-        # connection
-        connection=connection,
+    html_body = password_body.format(
+        account=username, token=token,
     )
-    #msg.attach_alternative(email_html_message, "text/html")
-    msg.send()
+    send_mail(
+        'Password Reset on Proof of Gold',
+        '',
+        EMAIL_HOST_USER,
+        [email],
+        connection=connection,
+        html_message = password_style + html_body,
+    )
 
 
 class ResetPasswordValidateToken(GenericAPIView):

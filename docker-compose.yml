@@ -25,6 +25,7 @@ services:
       - ./remusgold/store:/code/remusgold/store
       - ./remusgold/vouchers:/code/remusgold/vouchers
       - ./remusgold/transfers:/code/remusgold/transfers
+      - ./remusgold/rates:/code/remusgold/rates
     networks:
       remusgold-net:
   receiver:

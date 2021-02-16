@@ -98,7 +98,8 @@ class CreatePaymentView(APIView):
                                 properties={
                                     'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
                                     'user_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'quantity': openapi.Schema(type=openapi.TYPE_NUMBER)
+                                    'quantity': openapi.Schema(type=openapi.TYPE_NUMBER),
+                                    'currency': openapi.Schema(type=openapi.TYPE_STRING)
                                 }
                                 )),
         responses={200: 'OK'},
@@ -107,7 +108,9 @@ class CreatePaymentView(APIView):
         request_data = request.data
         print(request_data)
         usd_amount = 0
-        order = Order(user_id=user_id)
+        user_id = request_data[0].get('user_id')
+        currency = request_data[0].get('currency')
+        order = Order(user_id=user_id, currency = currency)
         order.save()
         for request in request_data:
             item_id = request.get('item_id')

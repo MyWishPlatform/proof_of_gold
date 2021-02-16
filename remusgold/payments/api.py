@@ -21,15 +21,17 @@ def parse_payment_message(message):
             break
     if not active_order:
         print('Active order not found, cancelling payment checker')
-    payment_usd_amount = message['amount'] / DECIMALS(message['currency']) #RATES
-    #RATES!!!!
-    active_order.received_usd_amount += payment_usd_amount
-    if active_order.received_usd_amount < 0.995 * active_order.required_usd_amount:
+        return 'no order'
+    currency = message['currency']
+    payment_usd_amount = message['amount'] / float(DECIMALS[message['currency']]) * float(getattr(active_order, f'fixed_{currency.lower()}_rate'))
+    active_order.received_usd_amount = float(active_order.received_usd_amount) + payment_usd_amount
+    print(active_order.received_usd_amount, active_order.required_usd_amount)
+    if float(active_order.received_usd_amount) < 0.995 * float(active_order.required_usd_amount):
         active_order.status = 'UNDERPAYMENT'
         active_order.save()
         #ANY MESSAGES TO USER?
         return 'underpayment'
-    elif active_order.received_usd_amount > 1.05 * active_order.required_usd_amount:
+    elif float(active_order.received_usd_amount) > 1.05 * float(active_order.required_usd_amount):
         process_correct_payment(active_order)
         process_overpayment(active_order, message)
         return 'overpayment'
@@ -59,10 +61,11 @@ def process_correct_payment(active_order):
     # SEND MAIL
 
 def process_overpayment(active_order, message):
-    delta = active_order.received_usd_amount - active_order.required_us_amount
+    currency = message['currency']
+    delta = (float(active_order.received_usd_amount) - float(active_order.required_usd_amount)) /float(getattr(active_order, f'fixed_{currency.lower()}_rate')) * DECIMALS[currency]
     currency = active_order.currency
     if currency == 'ETH':
-        return_transfer = eth_return_transfer(active_order, delta, message)
+        return_transfer = eth_return_transfer(active_order, int(delta), message)
     if currency == 'USDC':
         pass
         #return_transfer = usdc_return_transfer()

@@ -12,20 +12,43 @@ from web3.exceptions import TransactionNotFound
 from remusgold.settings import GAS_LIMIT
 from remusgold.settings import ROOT_KEYS
 from utils.private_keys_generation import get_private_keys
+from remusgold.settings import NETWORK_SETTINGS
+from remusgold.account.models import AdvUser
+from eth_account import Account
+
+def duc_transfer(duc_address, duc_amount):
+    try:
+        rpc = DucatuscoreInterface()
+        tx_hash = rpc.node_transfer(duc_address, duc_amount)
+    except DucatuscoreInterfaceException as err:
+        tx_hash = 'ERROR'
+        raise APIException(detail=str(err))
+
+    return tx_hash
+
+
+def confirm_transfer(message):
+    tx_hash = message.get('txHash')
+    transfer = Transfer.objects.get(tx_hash=tx_hash)
+    transfer.transfer_status = 'CONFIRMED'
+    transfer.save()
 
 
 def eth_return_transfer(order, amount, message):
     print('starting eth return', flush = True)
+    user=AdvUser.objects.get(id=order.user_id)
     w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
+    print(amount)
+    print(w3.eth.gasPrice * GAS_LIMIT * 1.1)
     amount = amount - w3.eth.gasPrice * GAS_LIMIT * 1.1
-    to_address = message['from_address']
+    to_address = Web3.toChecksumAddress(message['from_address'])
     try:
         tx_params = {
-            'nonce': w3.eth.getTransactionCount(order.eth_address),  # 'pending'?
+            'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(user.eth_address)),  # 'pending'?
             'gasPrice': w3.eth.gasPrice,
             'gas': GAS_LIMIT,
             'to': to_address,
-            'value': amount,
+            'value': int(amount),
             'data': b'',
         }
         root_private_key = ROOT_KEYS['mainnet']['private']
@@ -38,10 +61,7 @@ def eth_return_transfer(order, amount, message):
         return tx_hex
     except Exception as e:
         print(e)
-        transfer.tx_error = repr(e)
-        transfer.state = 'FAIL'
-        transfer.save()
-        return None
+        return repr(e)
 
 def usdc_return_transfer():
     #w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))

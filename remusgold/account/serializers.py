@@ -11,19 +11,14 @@ class PatchSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         print('here', flush= True)
+        print('started patch')
         try:
-            if validated_data['password']:
-                print('here1', flush=True)
-                password = validated_data.pop('password')
-                check = instance.check_password(password)
-                print(check, flush= True)
-                if check:
-                    print('here2', flush=True)
-                    new_password = validated_data.pop('new_password')
-                    hashed_password = make_password(new_password, salt=None, hasher='default')
-                    setattr(instance, 'password', hashed_password)
-        except KeyError as e:
-            print(e)
+            if validated_data['new_password']:
+                new_password = validated_data.pop('new_password')
+                hashed_password = make_password(new_password, salt=None, hasher='default')
+                setattr(instance, 'password', hashed_password)
+        except KeyError:
+            pass
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
