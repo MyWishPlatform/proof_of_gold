@@ -26,8 +26,8 @@ class AdvUser(AbstractUser):
     max_length=255, unique=True)
     first_name = models.CharField(max_length=20, blank=True)
     last_name = models.CharField(max_length=20, blank=True)
-    billing_address = models.OneToOneField('BillingAddress', on_delete=models.CASCADE, blank=True, null=True)
-    shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.CASCADE, blank=True, null=True)
+    billing_address = models.OneToOneField('BillingAddress', on_delete=models.PROTECT, blank=True, null=True)
+    shipping_address = models.OneToOneField('ShippingAddress', on_delete=models.PROTECT, blank=True, null=True)
     btc_address = models.CharField(max_length=50, null=True, default=None)
     eth_address = models.CharField(max_length=50, null=True, default=None)
     agent = models.CharField(max_length=150, null=True, default=None)
@@ -77,6 +77,7 @@ class ShippingAddress(models.Model):
     county = models.CharField(max_length=15, null=True)
     phone = models.CharField(max_length=20, null=True)
     email = models.CharField(max_length=50, null=True)
+
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):

@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 
 from remusgold.payments.models import Payment, Order
 from remusgold.store.models import Item
-from remusgold.account.models import AdvUser
+from remusgold.account.models import AdvUser, Token
 from remusgold.vouchers.models import Voucher
 from remusgold.settings import ALLOWED_HOSTS
 # Create your views here.
@@ -93,28 +93,43 @@ class CreatePaymentView(APIView):
     @swagger_auto_schema(
         operation_description="post user's payments",
         request_body=openapi.Schema(
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_OBJECT,
-                                properties={
-                                    'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'user_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'quantity': openapi.Schema(type=openapi.TYPE_NUMBER),
-                                    'currency': openapi.Schema(type=openapi.TYPE_STRING)
-                                }
-                                )),
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'items': openapi.Schema(type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT,
+                    properties={
+                       'item_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+                       'quantity': openapi.Schema(type=openapi.TYPE_NUMBER),
+                        },
+                    ),),
+                'currency': openapi.Schema(type = openapi.TYPE_STRING),
+                'shipping_address': openapi.Schema(type=openapi.TYPE_OBJECT,
+                    properties={
+                        'first_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'last_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'company_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'country': openapi.Schema(type=openapi.TYPE_STRING),
+                        'full_address': openapi.Schema(type=openapi.TYPE_STRING),
+                        'town': openapi.Schema(type=openapi.TYPE_STRING),
+                        'county': openapi.Schema(type=openapi.TYPE_STRING),
+                        'phone': openapi.Schema(type=openapi.TYPE_STRING),
+                        'email': openapi.Schema(type=openapi.TYPE_STRING),
+                    },)
+                },
+            ),
         responses={200: 'OK'},
     )
-    def post(self, request):
+    def post(self, request, token):
         request_data = request.data
         print(request_data)
         usd_amount = 0
-        user_id = request_data[0].get('user_id')
-        currency = request_data[0].get('currency')
-        order = Order(user_id=user_id, currency = currency)
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
+        currency = request_data.get('currency')
+        order = Order(user=user, currency = currency)
         order.save()
-        for request in request_data:
+        for request in request_data.get('items'):
             item_id = request.get('item_id')
-            user_id = request.get('user_id')
             quantity = request.get('quantity')
             payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()

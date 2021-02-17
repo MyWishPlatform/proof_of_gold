@@ -172,22 +172,22 @@ order_body = """<body ducatus bgcolor="#000">
                   </tr>
                   <tr>
                     <td class="text text-group">
-                      Name: <span class="text-yellow">Name Name</span>
+                      Name: <span class="text-yellow">{first_name} {last_name}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Email: <span class="text-yellow"> email@mail.com</span>
+                      Email: <span class="text-yellow"> {email}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Phone: <span class="text-yellow">+1234567890</span>
+                      Phone: <span class="text-yellow">{phone}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Delivery Address: <span class="text-yellow">123</span>
+                      Delivery Address: <span class="text-yellow">{delivery_address}</span>
                     </td>
                   </tr>
                   <tr>
@@ -211,33 +211,36 @@ order_body = """<body ducatus bgcolor="#000">
                       customer. 
                     </td>
                   </tr>
-                  <tr>
+"""
+item_body = """<tr>
                     <td class="text text-group">
                       Item:
-                      <span class="text-yellow">Ducatus Prime Gold Coin</span>
+                      <span class="text-yellow">{item_name}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Weight: <span class="text-yellow">5 grams</span>
+                      Weight: <span class="text-yellow">{weight}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Paid Amount: <span class="text-yellow">USD 472</span>
+                      Paid Amount: <span class="text-yellow">USD {amount}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Paid by: <span class="text-yellow">Credit Card</span>
+                      Paid by: <span class="text-yellow">{paid_by}</span>
                     </td>
                   </tr>
                   <tr>
                     <td class="text">
-                      Bonus Ducatus Coins: <span class="text-yellow">40%</span>
+                      Bonus Ducatus Coins: <span class="text-yellow">{bonus}%</span>
                     </td>
                   </tr>
-                  <tr>
+"""
+
+ending_body = """<tr>
                     <td class="text text-group text-yellow">
                       How to redeem Ducatus Coins:
                     </td>
@@ -277,7 +280,7 @@ order_body = """<body ducatus bgcolor="#000">
                       >
                     </td>
                   </tr>
-                  <tr>
+                  <tr>payments = payments,
                     <td class="text-sm text-cont">Mobile</td>
                   </tr>
                   <tr>

@@ -242,8 +242,14 @@ class RegisterView(APIView):
         try:
             user = AdvUser.objects.create_user(username, email, password)
             user.save()
-        except IntegrityError:
-            response_data = {'username or email already occupied'}
+        except IntegrityError as e:
+            err=repr(e)[80]
+            if err == 'u':
+                response_data = {'username': 'this username is already in use'}
+            elif err == 'e':
+                response_data = {'email': 'this email is already in use'}
+            else:
+                response_data = {'uncatched': 'something is wrong'}
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         user.generate_keys()
         user.save()
@@ -306,8 +312,9 @@ class ShippingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
-        user.shipping_address = ShippingAddress()
-        user.shipping_address.save()
+        shipping = ShippingAddress()
+        shipping.save()
+        user.shipping_address = shipping
         user.save()
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
@@ -361,8 +368,9 @@ class BillingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
-        user.billing_address = BillingAddress()
-        user.billing_address.save()
+        billing = BillingAddress()
+        billing.save()
+        user.billing_address = billing
         user.save()
         serializer = PatchBillingAddressSerializer(user.billing_address, data=request.data, partial=True)
         if serializer.is_valid():
