@@ -316,9 +316,12 @@ class ShippingView(APIView):
         shipping.save()
         user.shipping_address = shipping
         user.save()
+        ser = AdvUser.objects.get(id=token.user_id)
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+        else:
+            print(serializer.errors)
         user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.shipping_address.first_name, 'last_name': user.shipping_address.last_name,
             'company_name': user.shipping_address.company_name, 'country': user.shipping_address.country, 'full_address': user.shipping_address.full_address,
@@ -373,8 +376,13 @@ class BillingView(APIView):
         user.billing_address = billing
         user.save()
         serializer = PatchBillingAddressSerializer(user.billing_address, data=request.data, partial=True)
+        print(request.data)
+        print(serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
+       	else:
+            print('WHY')
+       	    print(serializer.errors, flush=True)
         user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.billing_address.first_name, 'last_name': user.billing_address.last_name,
             'company_name': user.billing_address.company_name, 'country': user.billing_address.country, 'full_address': user.billing_address.full_address,

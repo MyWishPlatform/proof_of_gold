@@ -31,7 +31,8 @@ class PatchShippingAddressSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+            if value != '':
+                setattr(instance, attr, value)
         instance.save()
         return instance
 
@@ -43,7 +44,8 @@ class PatchBillingAddressSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+            if value !=	'':
+                setattr(instance, attr, value)
         instance.save()
         return instance
 
