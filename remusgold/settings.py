@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'remusgold.vouchers',
     'remusgold.transfers',
     'remusgold.rates',
+    'remusgold.quantum',
 
 
 
