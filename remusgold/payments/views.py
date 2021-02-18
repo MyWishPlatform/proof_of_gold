@@ -8,7 +8,8 @@ from rest_framework.decorators import api_view
 
 from remusgold.payments.models import Payment, Order
 from remusgold.store.models import Item
-from remusgold.account.models import AdvUser, Token
+from remusgold.account.models import AdvUser, Token, ShippingAddress
+from remusgold.account.serializers import PatchShippingAddressSerializer
 from remusgold.vouchers.models import Voucher
 from remusgold.settings import ALLOWED_HOSTS
 # Create your views here.
@@ -128,6 +129,15 @@ class CreatePaymentView(APIView):
         currency = request_data.get('currency')
         order = Order(user=user, currency = currency)
         order.save()
+        shipping_address = request.data.get('shipping_address')
+        if shipping_address:
+            address = ShippingAddress()
+            address.save()
+            order.shipping_address = address
+            order.save()
+            serializer = PatchShippingAddressSerializer(address, data=request.data.get('shipping_address'), partial=True)
+            if serializer.is_valid():
+                serializer.save()
         for request in request_data.get('items'):
             item_id = request.get('item_id')
             quantity = request.get('quantity')

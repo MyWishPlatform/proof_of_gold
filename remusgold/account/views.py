@@ -316,7 +316,6 @@ class ShippingView(APIView):
         shipping.save()
         user.shipping_address = shipping
         user.save()
-        ser = AdvUser.objects.get(id=token.user_id)
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

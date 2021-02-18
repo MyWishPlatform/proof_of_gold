@@ -252,7 +252,7 @@ ending_body = """<tr>
                   </tr>
                   <tr>
                     <td class="text">
-                      Input this Confirmation Code (xxxxxx) and the address of
+                      Input this Confirmation Code {code} and the address of
                       the wallet where you want to send your Ducatus Coins.
                     </td>
                   </tr>
@@ -280,7 +280,7 @@ ending_body = """<tr>
                       >
                     </td>
                   </tr>
-                  <tr>payments = payments,
+                  <tr>
                     <td class="text-sm text-cont">Mobile</td>
                   </tr>
                   <tr>

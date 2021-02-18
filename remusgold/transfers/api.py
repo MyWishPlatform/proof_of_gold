@@ -9,10 +9,10 @@ from remusgold.settings import RATES_API_URL
 from remusgold.consts import DECIMALS
 from web3 import Web3, HTTPProvider
 from web3.exceptions import TransactionNotFound
-from remusgold.settings import GAS_LIMIT
+from remusgold.settings import GAS_LIMIT, ERC20_GAS_LIMIT
 from remusgold.settings import ROOT_KEYS
 from utils.private_keys_generation import get_private_keys
-from remusgold.settings import NETWORK_SETTINGS
+from remusgold.settings import NETWORK_SETTINGS, USDC_CONTRACT
 from remusgold.account.models import AdvUser
 from eth_account import Account
 
@@ -63,9 +63,31 @@ def eth_return_transfer(order, amount, message):
         print(e)
         return repr(e)
 
-def usdc_return_transfer():
-    #w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
-    pass
+def usdc_return_transfer(order, amount, message):
+    print('starting USDC return', flush=True)
+    user = AdvUser.objects.get(id=order.user_id)
+    w3 = Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
+    myContract = w3.eth.contract(address=Web3.toChecksumAddress(USDC_CONTRACT['address']), abi=USDC_CONTRACT['abi'])
+    print(amount)
+    to_address = Web3.toChecksumAddress(message['from_address'])
+    try:
+        tx_params = {
+            'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(user.eth_address)),  # 'pending'?
+            'gasPrice': w3.eth.gasPrice,
+            'gas': ERC20_GAS_LIMIT,
+        }
+        root_private_key = ROOT_KEYS['mainnet']['private']
+        root_public_key = ROOT_KEYS['mainnet']['public']
+        eth_priv_key, btc_priv_key = get_private_keys(root_private_key, order.user_id)
+        initial_tx = myContract.functions.transfer(to_address, int(amount)).buildTransaction(tx_params)
+        signed = Account.signTransaction(initial_tx, eth_priv_key)
+        tx_hash = w3.eth.sendRawTransaction(signed['rawTransaction'])
+        tx_hex = tx_hash.hex()
+        print(f'eth return for {amount} {order.currency} to {to_address} ok, tx hash:{tx_hex}\n', flush=True)
+        return tx_hex
+    except Exception as e:
+        print(e)
+        return repr(e)
 
 def btc_return_transfer():
     #w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))

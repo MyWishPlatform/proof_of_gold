@@ -1,6 +1,6 @@
 from django.db import models
 from remusgold.store.models import Item
-from remusgold.account.models import AdvUser
+from remusgold.account.models import AdvUser, ShippingAddress
 from remusgold.consts import MAX_AMOUNT_LEN
 from remusgold.rates.api import get_usd_prices
 from django.utils.timezone import now
@@ -19,6 +19,8 @@ class Order(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     time_to_live = models.IntegerField(default=3*60*60)
     currency = models.CharField(max_length=10, default='')
+    shipping_address = models.OneToOneField('account.ShippingAddress', on_delete=models.SET_NULL, blank=True, null=True)
+
 
     def get_required_amount(self):
         payments = Payment.objects.filter(order=self)
