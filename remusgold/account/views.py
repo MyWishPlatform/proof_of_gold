@@ -159,11 +159,11 @@ class GetView(APIView):
         email = request.data.get('email')
         if username:
             if (AdvUser.objects.filter(username=username)):
-                response_data = {'username': 'occupied'}
+                response_data = {'username': 'this username is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         if email:
             if (AdvUser.objects.filter(email=email)):
-                response_data = {'email': 'occupied'}
+                response_data = {'email': 'this email is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
