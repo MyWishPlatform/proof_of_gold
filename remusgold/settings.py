@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'remusgold.transfers',
     'remusgold.rates',
     'remusgold.quantum',
+    'remusgold.withdraw',
 
 
 

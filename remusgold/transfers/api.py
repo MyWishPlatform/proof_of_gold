@@ -15,6 +15,7 @@ from utils.private_keys_generation import get_private_keys
 from remusgold.settings import NETWORK_SETTINGS, USDC_CONTRACT
 from remusgold.account.models import AdvUser
 from eth_account import Account
+from remusgold.bitcoin_api import BitcoinAPI, BitcoinRPC
 
 def duc_transfer(duc_address, duc_amount):
     try:
@@ -89,6 +90,51 @@ def usdc_return_transfer(order, amount, message):
         print(e)
         return repr(e)
 
-def btc_return_transfer():
-    #w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
-    pass
+def btc_return_transfer(order, amount, message):
+    api = BitcoinAPI()
+    return_address, ok_response = api.get_return_address(message['transactionHash'])
+    if not ok_response:
+        print('BTC REFUND FAILED: Cannot get return address', flush=True)
+        print('tx hash', tx_hash, flush=True)
+        return
+
+    user = AdvUser.objects.get(id=order.user_id)
+    root_private_key = (ROOT_KEYS['testnet']['private'] if NETWORK_SETTINGS['BTC']['testnet'] else ROOT_KEYS['mainnet']['private'])
+    eth, priv = get_private_keys(root_private_key, user.id)
+    address_from = user.btc_address
+    tx_hash = message['transactionHash']
+    print(f'Creating refund for {tx_hash} at {amount} from {address_from} to {return_address}', flush=True)
+
+    input_params, input_value, ok_response = api.get_address_unspent_from_tx(address_from, tx_hash)
+    if not ok_response:
+        print('BTC REFUND FAILED: Cannot found vout for transaction', flush=True)
+        return
+
+    if ok_response and len(input_params) == 0:
+        # it's already in bitcoin_api as response with zero balance
+        return
+
+    print('found unspent input:', input_params, flush=True)
+
+    rpc = BitcoinRPC()
+    network_fee = rpc.relay_fee
+    raw_return_amount = int(amount) - network_fee
+    return_amount = raw_return_amount / DECIMALS['BTC']
+
+    output_params = {return_address: return_amount}
+    if int(amount) < int(input_value):
+        raw_change_amount = int(input_value) - raw_return_amount - network_fee
+        change_amount = raw_change_amount / DECIMALS['BTC']
+        output_params[address_from] = change_amount
+
+    print(f'Refund tx params: from {address_from} to {return_address} on amount {return_amount}', flush=True)
+    print('input_params', input_params, flush=True)
+    print('output_params', output_params, flush=True)
+
+    sent_tx = rpc.construct_and_send_tx(input_params, output_params, priv)
+
+    if not sent_tx:
+        err_str = f'Refund failed for address {address_from} and amount {return_amount} ({amount} - {network_fee})'
+        print(err_str, flush=True)
+
+    return sent_tx

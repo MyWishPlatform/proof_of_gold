@@ -109,6 +109,5 @@ def process_overpayment(active_order, message):
         pass
         return_transfer = usdc_return_transfer(active_order, int(delta), message)
     if currency == 'BTC':
-        pass
-        #return_transfer = btc_return_transfer()
+        return_transfer = btc_return_transfer(active_order, int(delta), message)
 
