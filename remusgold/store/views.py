@@ -8,6 +8,10 @@ from rest_framework.decorators import api_view
 
 from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
+from remusgold.account.models import get_mail_connection
+from remusgold.templates.email.contact_us_body import contact_us_body, contact_us_style
+from django.core.mail import send_mail
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 
 group_response = openapi.Response(
     description='Response with all items in category',
@@ -258,3 +262,38 @@ class SearchView(APIView):
                     'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
                     'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         return Response(search_result, status=status.HTTP_200_OK)
+
+
+
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
+            'message': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+        required=['api_key', 'data']
+    ),
+)
+@api_view(http_method_names=['POST'])
+def contact_us(request):
+    request_data = request.data
+    name = request_data.get('name')
+    email = request_data.get('email')
+    message = request_data.get('message')
+
+    connection = get_mail_connection()
+    html_body = contact_us_body.format(user=name, email=email, message=message)
+
+    send_mail(
+        'contact_us_form',
+        '',
+        EMAIL_HOST_USER,
+        [EMAIL_HOST_USER],
+        connection=connection,
+        html_message=contact_us_style + html_body,
+    )
+    print('message sent')
+    return Response('OK', status=status.HTTP_200_OK)
