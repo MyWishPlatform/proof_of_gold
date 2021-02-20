@@ -556,8 +556,12 @@ class ResetPasswordRequestToken(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
+        try:
+            serializer.is_valid(raise_exception=True)
+            email = serializer.validated_data['email']
+        except:
+            email = ''
+            user = request.data.get('email')
 
         # before we continue, delete all existing expired tokens
         password_reset_token_validation_time = get_password_reset_token_expiry_time()
@@ -573,6 +577,8 @@ class ResetPasswordRequestToken(GenericAPIView):
         users = AdvUser.objects.filter(
             **{'{}__iexact'.format(get_password_reset_lookup_field()): email})
 
+        if not users:
+            users = AdvUser.objects.filter(username=user)
         active_user_found = False
 
         # iterate over all users and check if there is any user that is active
