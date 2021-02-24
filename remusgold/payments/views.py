@@ -138,6 +138,13 @@ class CreatePaymentView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         currency = request_data.get('currency')
+        previous = Order.objects.filter(user=user).filter(status="WAITING_FOR_PAYMENT")
+        for prev in previous:
+            if prev:
+                prev.status="CANCELLED"
+                prev.save()
+
+
         order = Order(user=user, currency = currency)
         order.save()
         shipping_address = request.data.get('shipping_address')
@@ -158,4 +165,25 @@ class CreatePaymentView(APIView):
         order.get_required_amount()
         order.fix_rates()
 
-        return Response('OK', status=status.HTTP_200_OK)
+        response_data = {"id": order.id}
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class CheckActive(APIView):
+
+    @swagger_auto_schema(
+        operation_description="check user's payments status",
+        responses={200: 'OK'},
+    )
+    def get(self, request, id):
+        try:
+            order = Order.objects.get(id=id)
+            if order.status in ("PAID", "OVERPAYMENT"):
+                return Response('PAID', status=status.HTTP_200_OK)
+            elif order.status in ("UNDERPAYMENT", "CANCELLED"):
+                return Response('CANCELLED', status=status.HTTP_200_OK)
+            else:
+                return Response('WAITING_FOR_PAYMENT', status=status.HTTP_200_OK)
+        except:
+            return Response('NO_ORDER', status=status.HTTP_200_OK)
