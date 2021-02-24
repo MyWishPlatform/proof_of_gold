@@ -57,18 +57,29 @@ class GetPaymentsView(APIView):
         operation_description="get all user's payments",
         responses={200: get_response},
     )
-    def get(self, request, user_id):
-        payment_list = []
-        orders = Order.objects.filter(user_id=user_id).filter(status='PAID')
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
+        orders = Order.objects.filter(user_id=user.id).filter(status='PAID')
+        response_data = []
         for order in orders:
+            if order.currency == 'ETH':
+                paid_by = 'ETH'
+            elif order.currency == 'BTC':
+                paid_by = 'BTC'
+            elif order.currency == 'USDC':
+                paid_by = 'USDC'
+            else:
+                paid_by = 'Credit Card'
+            current_order = {"id": order.id, "cost": order.required_usd_amount, 'date': order.created_date,
+                'payment': paid_by, 'products': []}
             payments = Payment.objects.filter(order=order)
 
             for payment in payments:
                 item = payment.item
-                payment_list.append({'item_id': item.id, 'item_name': item.name,
-                'item_image': ALLOWED_HOSTS[0] + item.images.url, 'quantity': payment.quantity, 'created_date': payment.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
-
-        response_data = {'payments': payment_list,}
+                current_order['products'].append({'id': item.id, 'name': item.name,
+                'img': ALLOWED_HOSTS[0] + item.images.url, 'count': payment.quantity, 'cost': item.price})
+            response_data.append(current_order)
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
