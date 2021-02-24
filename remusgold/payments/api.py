@@ -20,7 +20,7 @@ def parse_payment_message(message):
     if not orders:
         return 'Order not found'
     for order in orders:
-        if order.is_active():
+        if order.is_active() and order.currency.lower() == message['currency'].lower():
             active_order=order
             break
     if not active_order:

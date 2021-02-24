@@ -57,9 +57,11 @@ class GetPaymentsView(APIView):
         operation_description="get all user's payments",
         responses={200: get_response},
     )
-    def get(self, request, user_id):
+    def get(self, request, token):
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         payment_list = []
-        orders = Order.objects.filter(user_id=user_id).filter(status='PAID')
+        orders = Order.objects.filter(user_id=user.id).filter(status='PAID')
         for order in orders:
             payments = Payment.objects.filter(order=order)
 
