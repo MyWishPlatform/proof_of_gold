@@ -174,8 +174,8 @@ class GetView(APIView):
         true_password = AdvUser.objects.get(id=token.user_id).password
         check = check_password(password, true_password)
         print(f'check: {check}', flush=True)
-        if  not check:
-            response_data = 'password is invalid'
+        if not check:
+            response_data = {'current_password': 'password is invalid'}
             return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
         request.data.pop('password')
         if request.data.get('new_password'):
@@ -184,9 +184,9 @@ class GetView(APIView):
                 validate_password(new_password, new_password,
                                   password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
             except ValidationError:
-                return Response('new password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'change_password': 'password is not valid'}, status=status.HTTP_401_UNAUTHORIZED)
             if new_password.isalpha():
-                return Response('new password is not valid', status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'change_password': 'password is not valid'}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = PatchSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

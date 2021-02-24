@@ -16,7 +16,7 @@ class TransferException(Exception):
 def parse_payment_message(message):
     #FINDING ORDER
     orders = Order.objects.filter(user_id=message['userID']).filter(status__in=('WAITING_FOR_PAYMENT', 'UNDERPAYMENT'))
-    active_order= False
+    active_order = False
     if not orders:
         return 'Order not found'
     for order in orders:
