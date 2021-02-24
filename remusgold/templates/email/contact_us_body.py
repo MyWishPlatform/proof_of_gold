@@ -127,7 +127,7 @@ contact_us_body ="""<body ducatus bgcolor="#000">
               <td style="border-radius: 0px" class="header">
                 <img
                   class="fix"
-                  src="https://devgold.rocknblock.io/media/logo.svg"
+                  src="https://devgold.rocknblock.io/media/logo.png"
                   width="108"
                   height="80"
                   border="0"
