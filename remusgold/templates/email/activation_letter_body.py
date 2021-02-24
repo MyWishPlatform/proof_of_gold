@@ -127,7 +127,7 @@ activation_body = """<body ducatus bgcolor="#000">
               <td style="border-radius: 0px" class="header">
                 <img
                   class="fix"
-                  src="https://proofofgold.herokuapp.com/logo-mail.svg"
+                  src="https://devgold.rocknblock.io/media/logo.svg"
                   width="108"
                   height="80"
                   border="0"

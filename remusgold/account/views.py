@@ -157,16 +157,16 @@ class GetView(APIView):
     def patch(self, request, token):
         username = request.data.get('username')
         email = request.data.get('email')
+        token = Token.objects.get(key=token)
+        user = AdvUser.objects.get(id=token.user_id)
         if username:
-            if (AdvUser.objects.filter(username=username)):
+            if (AdvUser.objects.exclude(username=user).filter(username=username)):
                 response_data = {'username': 'this username is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         if email:
-            if (AdvUser.objects.filter(email=email)):
+            if (AdvUser.objects.exclude(email=email).filter(email=email)):
                 response_data = {'email': 'this email is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        token = Token.objects.get(key=token)
-        user = AdvUser.objects.get(id=token.user_id)
         shipping_address_id, billing_address_id = get_addresses(user)
         password = request.data.get('password')
         print(password, flush=True)
