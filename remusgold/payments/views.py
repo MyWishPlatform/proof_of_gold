@@ -183,6 +183,8 @@ class CheckActive(APIView):
                 return Response('PAID', status=status.HTTP_200_OK)
             elif order.status in ("UNDERPAYMENT", "CANCELLED"):
                 return Response('CANCELLED', status=status.HTTP_200_OK)
+            elif order.status in ("EXPIRED",):
+                return Response('EXPIRED', status=status.HTTP_200_OK)
             else:
                 return Response('WAITING_FOR_PAYMENT', status=status.HTTP_200_OK)
         except:
