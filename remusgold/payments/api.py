@@ -80,6 +80,8 @@ def process_correct_payment(active_order):
         user=AdvUser.objects.get(id=active_order.user_id),
         usd_amount=usd_amount)
     voucher.save()
+    voucher.activation_code='PG-'+voucher.activation_code
+    voucher.save()
     user = AdvUser.objects.get(id=active_order.user_id)
     shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
     connection = get_mail_connection()
