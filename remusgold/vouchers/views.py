@@ -66,7 +66,8 @@ class VoucherActivationView(APIView):
         if transfer.tx_hash:
             print(f'VOUCHER ACTIVATION: Successful transfer {transfer.tx_hash} to {transfer.duc_address} '
                   f'for {token_amount} {transfer.currency}', flush=True)
-            return Response({'tx_hash': transfer.tx_hash}, status=200)
+            return Response({'tx_hash': transfer.tx_hash, 'usd_amount': voucher.usd_amount,
+                             'duc_amount': token_amount, 'lock_days': 0}, status=200)
         else:
             print(f'VOUCHER ACTIVATION: Failed transfer {token_amount} {transfer.currency} to {transfer.duc_address} '
                   f'with exception {transfer.tx_error}', flush=True)

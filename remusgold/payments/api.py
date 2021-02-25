@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 
 
+
 class TransferException(Exception):
     pass
 
@@ -33,7 +34,7 @@ def parse_payment_message(message):
     if float(active_order.received_usd_amount) < 0.995 * float(active_order.required_usd_amount):
         active_order.status = 'UNDERPAYMENT'
         active_order.save()
-        #ANY MESSAGES TO USER?
+        process_underpayment(active_order, message)
         return 'underpayment'
     elif float(active_order.received_usd_amount) > 1.05 * float(active_order.required_usd_amount):
         process_correct_payment(active_order)
@@ -110,8 +111,16 @@ def process_overpayment(active_order, message):
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, int(delta), message)
     if currency == 'USDC':
-        pass
         return_transfer = usdc_return_transfer(active_order, int(delta), message)
     if currency == 'BTC':
         return_transfer = btc_return_transfer(active_order, int(delta), message)
 
+def process_underpayment(active_order, message):
+    currency = message['currency']
+    currency = active_order.currency
+    if currency == 'ETH':
+        return_transfer = eth_return_transfer(active_order, message['amount'], message)
+    if currency == 'USDC':
+        return_transfer = usdc_return_transfer(active_order, message['amount'], message)
+    if currency == 'BTC':
+        return_transfer = btc_return_transfer(active_order, message['amount'], message)
