@@ -148,7 +148,7 @@ order_body = """<body ducatus bgcolor="#000">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td class="accent">
-                      Your order is confirmed (ORDER NUMBER)
+                      Your order is confirmed {order_number}
                     </td>
                   </tr>
                 </table>

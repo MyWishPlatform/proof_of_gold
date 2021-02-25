@@ -5,7 +5,8 @@ from remusgold.vouchers.models import Voucher
 from remusgold.consts import DECIMALS
 from remusgold.transfers.api import eth_return_transfer, btc_return_transfer, usdc_return_transfer
 from remusgold.account.models import get_mail_connection
-from remusgold.templates.email.payment_letter_body import order_body, order_style, item_body, ending_body
+#from remusgold.templates.email.payment_letter_body import order_body, order_style, item_body, ending_body
+from remusgold.templates.email.payment_letter_body2 import order_body, item_body, ending_body
 from django.core.mail import send_mail
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 
@@ -87,6 +88,7 @@ def process_correct_payment(active_order):
     else:
         delivery_address = shipping.country + ',' + shipping.town + ', ' + shipping.full_address
     html_body = order_body.format(
+        order_number = active_order.id,
         first_name = shipping.first_name, last_name = shipping.last_name, email = user.email,
         phone = shipping.phone, payments = payments,
         delivery_address = delivery_address,
@@ -101,7 +103,7 @@ def process_correct_payment(active_order):
         EMAIL_HOST_USER,
         [user.email],
         connection=connection,
-        html_message = order_style + html_body + html_items + html_ending,
+        html_message = html_body + html_items + html_ending,
     )
 
 def process_overpayment(active_order, message):
