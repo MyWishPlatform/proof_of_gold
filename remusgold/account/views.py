@@ -312,10 +312,11 @@ class ShippingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
-        shipping = ShippingAddress()
-        shipping.save()
-        user.shipping_address = shipping
-        user.save()
+        if not user.shipping_address:
+            shipping = ShippingAddress()
+            shipping.save()
+            user.shipping_address = shipping
+            user.save()
         serializer = PatchShippingAddressSerializer(user.shipping_address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -370,10 +371,11 @@ class BillingView(APIView):
     def patch(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
-        billing = BillingAddress()
-        billing.save()
-        user.billing_address = billing
-        user.save()
+        if not user.billing_address:
+            billing = BillingAddress()
+            billing.save()
+            user.billing_address = billing
+            user.save()
         serializer = PatchBillingAddressSerializer(user.billing_address, data=request.data, partial=True)
         print(request.data)
         print(serializer.is_valid())

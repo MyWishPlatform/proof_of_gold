@@ -81,10 +81,14 @@ def process_correct_payment(active_order):
     user = AdvUser.objects.get(id=active_order.user_id)
     shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
     connection = get_mail_connection()
+    if shipping.county:
+        delivery_address = shipping.country + ', ' + shipping.county + ', ' + shipping.town + ', ' + shipping.full_address
+    else:
+        delivery_address = shipping.country + ',' + shipping.town + ', ' + shipping.full_address
     html_body = order_body.format(
         first_name = shipping.first_name, last_name = shipping.last_name, email = user.email,
         phone = shipping.phone, payments = payments,
-        delivery_address = shipping.country + ', ' + shipping.county + ', ' + shipping.town + ', ' + shipping.full_address,
+        delivery_address = delivery_address,
     )
     html_ending = ending_body.format(code = voucher.activation_code)
 

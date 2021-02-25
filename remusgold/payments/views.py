@@ -63,11 +63,11 @@ class GetPaymentsView(APIView):
         orders = Order.objects.filter(user_id=user.id).filter(status='PAID')
         response_data = []
         for order in orders:
-            if order.currency == 'ETH':
+            if order.currency == 'eth':
                 paid_by = 'ETH'
-            elif order.currency == 'BTC':
+            elif order.currency == 'btc':
                 paid_by = 'BTC'
-            elif order.currency == 'USDC':
+            elif order.currency == 'usdc':
                 paid_by = 'USDC'
             else:
                 paid_by = 'Credit Card'
