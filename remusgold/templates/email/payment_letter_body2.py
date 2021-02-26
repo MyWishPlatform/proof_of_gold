@@ -66,7 +66,7 @@ order_body = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "
                         text-align: center;
                       "
                     >
-                      Your order is confirmed {order_number}
+                      Your order {order_number} is confirmed
                     </td>
                   </tr>
                 </table>
@@ -292,8 +292,9 @@ ending_body = """<tr>
                       class="text"
                       style="font-size: 15px; line-height: 17px; color: white"
                     >
-                      Input this Confirmation Code {code} and the address of
-                      the wallet where you want to send your Ducatus Coins.
+                      Input this Confirmation Code 
+                      <span style="color: #fac929">{code}</span> and the 
+                      address of the wallet where you want to send your Ducatus Coins.
                     </td>
                   </tr>
                   <tr>

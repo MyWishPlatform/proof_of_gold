@@ -3,7 +3,7 @@ from remusgold.account.models import AdvUser, ShippingAddress
 from remusgold.store.models import Item
 from remusgold.vouchers.models import Voucher
 from remusgold.consts import DECIMALS
-from remusgold.transfers.api import eth_return_transfer, btc_return_transfer, usdc_return_transfer
+from remusgold.transfers.api import eth_return_transfer, btc_return_transfer
 from remusgold.account.models import get_mail_connection
 #from remusgold.templates.email.payment_letter_body import order_body, order_style, item_body, ending_body
 from remusgold.templates.email.payment_letter_body2 import order_body, item_body, ending_body
@@ -115,7 +115,7 @@ def process_overpayment(active_order, message):
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, int(delta), message)
     if currency == 'USDC':
-        return_transfer = usdc_return_transfer(active_order, int(delta), message)
+        print('USDC overpayment')
     if currency == 'BTC':
         return_transfer = btc_return_transfer(active_order, int(delta), message)
 
@@ -125,6 +125,6 @@ def process_underpayment(active_order, message):
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, message['amount'], message)
     if currency == 'USDC':
-        return_transfer = usdc_return_transfer(active_order, message['amount'], message)
+        print('USDC underpayment')
     if currency == 'BTC':
         return_transfer = btc_return_transfer(active_order, message['amount'], message)

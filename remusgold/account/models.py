@@ -7,7 +7,8 @@ from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.core.signing import Signer
 from remusgold.settings import ALLOWED_HOSTS
-from remusgold.templates.email.activation_letter_body import activation_body, activation_style
+#from remusgold.templates.email.activation_letter_body import activation_body, activation_style
+from remusgold.templates.email.activation_letter_body2 import activation_body
 from rest_framework.authtoken.models import Token
 from django.core.signing import Signer
 from django.core.mail import send_mail
@@ -124,5 +125,5 @@ def send_activation_notification(user):
         EMAIL_HOST_USER,
         [user.email],
         connection=connection,
-        html_message=activation_style + html_body,
+        html_message=html_body,
         )

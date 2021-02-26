@@ -38,8 +38,10 @@ from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress, g
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from remusgold.account.models import get_mail_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-from remusgold.templates.email.security_letter_body import security_body, security_style
-from remusgold.templates.email.password_letter_body import password_body, password_style
+#from remusgold.templates.email.security_letter_body import security_body, security_style
+from remusgold.templates.email.security_letter_body2 import security_body
+#from remusgold.templates.email.password_letter_body import password_body, password_style
+from remusgold.templates.email.password_letter_body2 import password_body
 
 
 from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
@@ -447,7 +449,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
                 EMAIL_HOST_USER,
                 [user.email],
                 connection=connection,
-                html_message= security_style + html_body,
+                html_message= html_body,
             )
 
             return Response({'alert': 'security code needed'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -646,7 +648,7 @@ def password_reset_token_created(sender, instance, reset_password_token, usernam
         EMAIL_HOST_USER,
         [email],
         connection=connection,
-        html_message = password_style + html_body,
+        html_message = html_body,
     )
 
 
