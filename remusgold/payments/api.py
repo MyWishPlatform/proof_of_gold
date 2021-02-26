@@ -121,7 +121,7 @@ def process_overpayment(active_order, message):
 
 def process_underpayment(active_order, message):
     currency = message['currency']
-    currency = active_order.currency
+    order_currency = active_order.currency
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, message['amount'], message)
     if currency == 'USDC':
