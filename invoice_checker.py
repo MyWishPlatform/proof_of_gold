@@ -19,3 +19,5 @@ if __name__ == '__main__':
             if not order.is_active():
                 order.status = "EXPIRED"
                 order.save()
+        print('sleeping')
+        time.sleep(600)

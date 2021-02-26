@@ -36,7 +36,7 @@ class Order(models.Model):
           * status is 'waiting'
           * time_to_live is more than time passed from model creation
         """
-        if self.status not in ('UNDERPAYMENT', 'WAITING_FOR_PAYMENT'):
+        if self.status not in ('WAITING_FOR_PAYMENT',):
             return False
         return now() - self.created_date < timedelta(seconds=self.time_to_live)
 

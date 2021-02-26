@@ -45,7 +45,7 @@ def eth_return_transfer(order, amount, message):
     to_address = Web3.toChecksumAddress(message['from_address'])
     try:
         tx_params = {
-            'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(user.eth_address)),  # 'pending'?
+            'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(user.eth_address), 'pending'),  # 'pending'?
             'gasPrice': w3.eth.gasPrice,
             'gas': GAS_LIMIT,
             'to': to_address,

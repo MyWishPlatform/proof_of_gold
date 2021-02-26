@@ -111,13 +111,15 @@ def process_correct_payment(active_order):
 def process_overpayment(active_order, message):
     currency = message['currency']
     delta = (float(active_order.received_usd_amount) - float(active_order.required_usd_amount)) /float(getattr(active_order, f'fixed_{currency.lower()}_rate')) * DECIMALS[currency]
-    currency = active_order.currency
+    order_currency = active_order.currency
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, int(delta), message)
     if currency == 'USDC':
         print('USDC overpayment')
     if currency == 'BTC':
         return_transfer = btc_return_transfer(active_order, int(delta), message)
+    active_order.status = 'OVERPAYMENT'
+    active_order.save()
 
 def process_underpayment(active_order, message):
     currency = message['currency']
