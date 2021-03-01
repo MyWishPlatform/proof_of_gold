@@ -217,6 +217,7 @@ class RegisterView(APIView):
                 'username': openapi.Schema(type=openapi.TYPE_STRING),
                 'password': openapi.Schema(type=openapi.TYPE_STRING),
                 'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'ip': openapi.Schema(type=openapi.TYPE_STRING),
             },
         ),
         responses={200: register_response, 400: 'Password is not valid'},
@@ -227,6 +228,7 @@ class RegisterView(APIView):
             username = request_data_init['username']
             email = request_data_init['email']
             password = request_data_init['password']
+            ip = request_data_init['ip']
         except:
             request_data = request_data_init['_content']
             request_data = json.loads(request_data)
@@ -234,6 +236,7 @@ class RegisterView(APIView):
             username = request_data['username']
             email = request_data['email']
             password = request_data['password']
+            request_ip = request_data['ip']
         try:
             validate_password(password, password, password_validators=[MinimumLengthValidator(min_length=8), NumericPasswordValidator])
         except ValidationError:
@@ -258,10 +261,9 @@ class RegisterView(APIView):
 
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
-        if ip[0:3] != '172':
-            geo = check_ip(ip)
-        else:
-            geo = 'local'
+        if ip[0:3] == '172':
+            ip = request_ip
+        geo = check_ip(ip)
         user.agent = agent
         user.geolocation = geo
         user.save()
@@ -425,14 +427,8 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
         if ip[:3] == '172':
-            if user.is_activated:
-                return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
-                             'first_name': user.first_name, 'last_name': user.last_name,
-                             'billing_address_id': billing_address_id,
-                             'shipping_adress_id': shipping_address_id})
-            else:
-                return Response({'status': 'User is not activated'}, status=status.HTTP_400_BAD_REQUEST)
-
+            print(f'request_data:{request.data}')
+            ip = request.data.get('ip')
         geo = check_ip(ip)
         if geo != user.geolocation or agent != user.agent:
             print(f'suspicious meta: geo {geo}, agent: {agent}')
@@ -595,10 +591,8 @@ class ResetPasswordRequestToken(GenericAPIView):
         # No active user found, raise a validation error
         # but not if DJANGO_REST_RESETPASSWORD_NO_INFORMATION_LEAKAGE == True
         if not active_user_found and not getattr(settings, 'DJANGO_REST_RESETPASSWORD_NO_INFORMATION_LEAKAGE', False):
-            raise exceptions.ValidationError({
-                'email': [_(
-                    "There is no active user associated with this e-mail address or the password can not be changed")],
-            })
+            response_data = {'email': 'There is no user with this email or username'}
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
         # last but not least: iterate over all users that are active and can change their password
         # and create a Reset Password Token and send a signal with the created token

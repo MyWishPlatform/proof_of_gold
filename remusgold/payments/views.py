@@ -60,7 +60,7 @@ class GetPaymentsView(APIView):
     def get(self, request, token):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
-        orders = Order.objects.filter(user_id=user.id).filter(status__in=('PAID', 'OVERPAYMENT'))
+        orders = Order.objects.filter(user_id=user.id).filter(status__in=('PAID', 'OVERPAYMENT')).order_by('-id')
         response_data = []
         for order in orders:
             if order.currency == 'eth':
