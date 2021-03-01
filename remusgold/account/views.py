@@ -1,7 +1,10 @@
 import json
 from datetime import timedelta
+import geoip2.database
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework.authtoken import views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import APIView
@@ -33,22 +36,18 @@ from django.core.mail import send_mail
 from django.core.mail import get_connection
 from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password
+from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
+from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
+    get_password_reset_lookup_field
+from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
 
 from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress, get_mail_connection
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
 from remusgold.account.models import get_mail_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-#from remusgold.templates.email.security_letter_body import security_body, security_style
 from remusgold.templates.email.security_letter_body2 import security_body
-#from remusgold.templates.email.password_letter_body import password_body, password_style
 from remusgold.templates.email.password_letter_body2 import password_body
 
-
-from django_rest_resetpassword.serializers import EmailSerializer, PasswordTokenSerializer, TokenSerializer
-from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
-    get_password_reset_lookup_field
-from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
-import geoip2.database
 
 
 signer = Signer()
@@ -228,7 +227,7 @@ class RegisterView(APIView):
             username = request_data_init['username']
             email = request_data_init['email']
             password = request_data_init['password']
-            ip = request_data_init['ip']
+            request_ip = request_data_init['ip']
         except:
             request_data = request_data_init['_content']
             request_data = json.loads(request_data)
@@ -510,24 +509,25 @@ def register_activate(request, sign):
 def check_code(request):
     request_data = request.data
     code = request_data.get('code')
-    token = request_data.get('token')
-    token = Token.objects.get(key=token)
-    user = AdvUser.objects.get(id=token.user_id)
+    try:
+        user = AdvUser.objects.get(code=code)
+    except:
+        response_data = {'error': 'invalid code'}
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     shipping_address_id, billing_address_id = get_addresses(user)
-    if code == user.code:
-        user.code = None
-        agent = request.META.get('HTTP_USER_AGENT')
-        ip = get_client_ip(request)
-        geo = check_ip(ip)
-        user.geolocation = geo
-        user.agent = agent
-        user.save()
-        return Response({'token': token.key, 'username': user.username, 'id': user.id, 'email': user.email,
+    user.code = None
+    agent = request.META.get('HTTP_USER_AGENT')
+    ip = get_client_ip(request)
+    if ip[0:3] == '172':
+        ip = request_data.get('ip')
+    geo = check_ip(ip)
+    user.geolocation = geo
+    user.agent = agent
+    user.save()
+    return Response({'token': token.key, 'username': user.username, 'id': user.id, 'email': user.email,
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
                     status=status.HTTP_200_OK)
-    else:
-        return Response('invalid code', status=status.HTTP_400_BAD_REQUEST)
 
 # FROM NOW, I DON'T HAVE ANY FUCKING IDEA WHAT IS HAPPENING HERE, PROCEED ON YOUR OWN RISK
 

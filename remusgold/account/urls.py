@@ -1,10 +1,10 @@
 from django.urls import path
 from django.conf.urls import url
+from rest_framework.authtoken import views
+from django_rest_resetpassword.views import reset_password_confirm
+
 from remusgold.account.views import RegisterView, GetView, ShippingView, BillingView, ObtainAuthTokenWithId, \
 register_activate, reset_password_request_token, reset_password_validate_token, GetAddressesView, check_code
-from rest_framework.authtoken import views
-
-from django_rest_resetpassword.views import reset_password_confirm
 
 app_name = 'reset_password'
 

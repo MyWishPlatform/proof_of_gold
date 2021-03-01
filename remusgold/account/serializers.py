@@ -1,7 +1,9 @@
 from rest_framework import serializers
+from django.contrib.auth.hashers import make_password
+
 from remusgold.account.models import AdvUser, BillingAddress, ShippingAddress
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-from django.contrib.auth.hashers import make_password
+
 
 class PatchSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField()
@@ -23,6 +25,7 @@ class PatchSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
 
 class PatchShippingAddressSerializer(serializers.ModelSerializer):
     class Meta:

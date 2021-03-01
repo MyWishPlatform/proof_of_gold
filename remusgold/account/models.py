@@ -1,3 +1,6 @@
+from bip32utils import BIP32Key
+from eth_keys import keys
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -6,19 +9,15 @@ from django.dispatch import receiver
 from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.core.signing import Signer
-from remusgold.settings import ALLOWED_HOSTS
-#from remusgold.templates.email.activation_letter_body import activation_body, activation_style
-from remusgold.templates.email.activation_letter_body2 import activation_body
 from rest_framework.authtoken.models import Token
 from django.core.signing import Signer
 from django.core.mail import send_mail
 from django.core.mail import get_connection
-from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
-from remusgold.account.api import get_root_key
 
-from bip32utils import BIP32Key
-from eth_keys import keys
-# Create your models here.
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+from remusgold.settings import ALLOWED_HOSTS
+from remusgold.account.api import get_root_key
+from remusgold.templates.email.activation_letter_body2 import activation_body
 
 
 class AdvUser(AbstractUser):
@@ -34,7 +33,6 @@ class AdvUser(AbstractUser):
     agent = models.CharField(max_length=150, null=True, default=None)
     geolocation = models.CharField(max_length=150, null=True, default=None)
     code = models.CharField(max_length=6, null=True, default=None)
-
 
     def generate_keys(self):
         eth_btc_root_pub_key = get_root_key()
@@ -53,7 +51,7 @@ def user_registrated_dispatcher(sender, instance, created, **kwargs):
         send_activation_notification(instance)
 
 
-post_save.connect(user_registrated_dispatcher, sender= AdvUser)
+post_save.connect(user_registrated_dispatcher, sender=AdvUser)
 
 
 class BillingAddress(models.Model):
@@ -85,22 +83,6 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
 
-#MAIL TESTING
-def send_email(email):
-    connection = get_mail_connection()
-    html_body = activation_html_body.format(
-        tokens_purchased=self.usd_amount,
-    )
-    send_mail(
-        'Registration on Proof of Gold',
-        '',
-        EMAIL_HOST_USER,
-        [email],
-        connection=connection,
-        html_message=html_body,
-        )
-
-
 def get_mail_connection():
     return get_connection(
         host=EMAIL_HOST,
@@ -109,7 +91,6 @@ def get_mail_connection():
         password=EMAIL_HOST_PASSWORD,
         use_tls=EMAIL_USE_TLS,
     )
-
 
 def send_activation_notification(user):
     #user = AdvUser.objects.get(id=id)
