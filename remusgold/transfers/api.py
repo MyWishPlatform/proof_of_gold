@@ -18,6 +18,9 @@ from eth_account import Account
 from remusgold.bitcoin_api import BitcoinAPI, BitcoinRPC
 
 def duc_transfer(duc_address, duc_amount):
+    '''
+    base duc_transfer after voucher activation
+    '''
     try:
         rpc = DucatuscoreInterface()
         tx_hash = rpc.node_transfer(duc_address, duc_amount)
@@ -36,9 +39,9 @@ def confirm_transfer(message):
 
 
 def eth_return_transfer(order, amount, message):
-    print('starting eth return', flush = True)
-    user=AdvUser.objects.get(id=order.user_id)
-    w3= Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
+    print('starting eth return', flush=True)
+    user = AdvUser.objects.get(id=order.user_id)
+    w3 = Web3(HTTPProvider(NETWORK_SETTINGS['ETH']['endpoint']))
     print(amount)
     print(w3.eth.gasPrice * GAS_LIMIT * 1.1)
     amount = amount - w3.eth.gasPrice * GAS_LIMIT * 1.1

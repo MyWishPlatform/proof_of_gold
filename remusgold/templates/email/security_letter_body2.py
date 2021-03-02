@@ -129,7 +129,6 @@ security_body = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN
                         font-size: 25px;
                         font-weight: 700;
                         color: #fac929;
-                        text-transform: uppercase;
                       "
                       align="center"
                     >

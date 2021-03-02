@@ -124,6 +124,10 @@ crypto_response = openapi.Response(
 
 
 class GetView(APIView):
+    '''
+    view for getting and patching user info with validating passwords
+    '''
+
     #permission_classes = (IsAuthenticated,)
 
     @swagger_auto_schema(
@@ -161,11 +165,11 @@ class GetView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         if username:
-            if (AdvUser.objects.exclude(username=user.username).filter(username=username)):
+            if AdvUser.objects.exclude(username=user.username).filter(username=username):
                 response_data = {'username': 'this username is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         if email:
-            if (AdvUser.objects.exclude(email=user.email).filter(email=email)):
+            if AdvUser.objects.exclude(email=user.email).filter(email=email):
                 response_data = {'email': 'this email is already in use'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         shipping_address_id, billing_address_id = get_addresses(user)
@@ -200,13 +204,15 @@ class GetView(APIView):
 
 def is_unique(field, item):
     print(field, item)
-    if (AdvUser.objects.filter(field=item)):
+    if AdvUser.objects.filter(field=item):
         return False
     else:
         return True
 
 class RegisterView(APIView):
-
+    '''
+    class for user's registration
+    '''
     @swagger_auto_schema(
         operation_description="register user",
         request_body=openapi.Schema(
@@ -243,11 +249,12 @@ class RegisterView(APIView):
         if password.isalpha():
             return Response('Password is not valid', status=status.HTTP_401_UNAUTHORIZED)
 
+        #checking if credentials are occupied
         try:
             user = AdvUser.objects.create_user(username, email, password)
             user.save()
         except IntegrityError as e:
-            err=repr(e)[80]
+            err = repr(e)[80]
             if err == 'u':
                 response_data = {'username': 'this username is already in use'}
             elif err == 'e':
@@ -258,6 +265,7 @@ class RegisterView(APIView):
         user.generate_keys()
         user.save()
 
+        #geolocation block
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
         if ip[0:3] == '172':
@@ -267,6 +275,7 @@ class RegisterView(APIView):
         user.geolocation = geo
         user.save()
 
+        #creating token
         token, created = Token.objects.get_or_create(user=user)
         print(token)
         response_data = {'status': 'OK'}
@@ -276,6 +285,9 @@ class RegisterView(APIView):
 
 
 class ShippingView(APIView):
+    '''
+    view for getting and patching ShippingAddress
+    '''
     #permission_classes = (IsAuthenticated,)
 
     @swagger_auto_schema(
@@ -335,6 +347,9 @@ class ShippingView(APIView):
 
 
 class BillingView(APIView):
+    '''
+    view for getting and patching BillingAddress
+    '''
     #permission_classes = (IsAuthenticated,)
 
     @swagger_auto_schema(
@@ -384,9 +399,9 @@ class BillingView(APIView):
         print(serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
-       	else:
+        else:
             print('WHY')
-       	    print(serializer.errors, flush=True)
+            print(serializer.errors, flush=True)
         user = AdvUser.objects.get(id=token.user_id)
         response_data = {'first_name': user.billing_address.first_name, 'last_name': user.billing_address.last_name,
             'company_name': user.billing_address.company_name, 'country': user.billing_address.country, 'full_address': user.billing_address.full_address,
@@ -397,6 +412,9 @@ class BillingView(APIView):
 
 
 def get_addresses(user):
+    '''
+    getting user's addresses or None
+    '''
     try:
         shipping_address_id = user.shipping_address_id
     except:
@@ -409,7 +427,9 @@ def get_addresses(user):
 
 
 class ObtainAuthTokenWithId(views.ObtainAuthToken):
-
+    '''
+    Base login view
+    '''
     @swagger_auto_schema(
         operation_description="user's authentication",
         responses={200: get_response, 400: 'User is not activated', 401: 'security code needed'},
@@ -419,10 +439,11 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        user_id = user.id
         username = user.username
         shipping_address_id, billing_address_id = get_addresses(user)
         token, created = Token.objects.get_or_create(user=user)
+
+        #geolocation block
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
         if ip[:3] == '172':
@@ -430,6 +451,7 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
             ip = request.data.get('ip')
         geo = check_ip(ip)
         if geo != user.geolocation or agent != user.agent:
+            #sending security code
             print(f'suspicious meta: geo {geo}, agent: {agent}')
             code =get_random_string(length=6)
             user.code = code
@@ -449,13 +471,16 @@ class ObtainAuthTokenWithId(views.ObtainAuthToken):
 
             return Response({'alert': 'security code needed'}, status=status.HTTP_401_UNAUTHORIZED)
         if user.is_activated:
-            return Response({'token': token.key, 'username': username, 'id':user.id, 'email': user.email,
+            return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
                          'first_name': user.first_name, 'last_name': user.last_name,
                          'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
         else:
             return Response({'status': 'User is not activated'}, status=status.HTTP_400_BAD_REQUEST)
 
 def get_client_ip(request):
+    '''
+    get client ip address from request
+    '''
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         print(x_forwarded_for)
@@ -465,6 +490,9 @@ def get_client_ip(request):
     return ip
 
 def check_ip(ip):
+    '''
+    get geolocation (city) from ip
+    '''
     reader = geoip2.database.Reader('./GeoLite2-City.mmdb')
     response = reader.city(ip)
     print(response.country.iso_code)
@@ -476,6 +504,9 @@ def check_ip(ip):
 
 
 class GetAddressesView(APIView):
+    '''
+    get user's ETH and BTC addresses
+    '''
     @swagger_auto_schema(
         operation_description="get single user's crypto addresses",
         responses={200: crypto_response},
@@ -488,11 +519,14 @@ class GetAddressesView(APIView):
 
 @api_view(http_method_names=['GET'])
 def register_activate(request, sign):
+    '''
+    activating user after he proceed to url in email
+    '''
     try:
-        username=signer.unsign(sign)
+        username = signer.unsign(sign)
     except BadSignature:
         return render(request, 'main/bad_signature.html')
-    user=get_object_or_404(AdvUser, username=username)
+    user = get_object_or_404(AdvUser, username=username)
     if user.is_activated:
         return Response('already activated', status=status.HTTP_401_UNAUTHORIZED)
     else:
@@ -507,11 +541,15 @@ def register_activate(request, sign):
 
 @api_view(http_method_names=['POST'])
 def check_code(request):
+    '''
+    validating user's security code, rewriting his geolocation
+    '''
     request_data = request.data
     code = request_data.get('code')
     try:
         user = AdvUser.objects.get(code=code)
-    except:
+    except Exception as e:
+        print(e, flush=True)
         response_data = {'error': 'invalid code'}
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     shipping_address_id, billing_address_id = get_addresses(user)
@@ -524,15 +562,21 @@ def check_code(request):
     user.geolocation = geo
     user.agent = agent
     user.save()
+    token = Token.objects.get(user=user)
     return Response({'token': token.key, 'username': user.username, 'id': user.id, 'email': user.email,
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
                     status=status.HTTP_200_OK)
 
-# FROM NOW, I DON'T HAVE ANY FUCKING IDEA WHAT IS HAPPENING HERE, PROCEED ON YOUR OWN RISK
+'''
+Below till the end of file is rewritten logic from unworking lib https://pypi.org/project/django-rest-resetpassword/
+additionally added functionality to get user's email address (how the hell it should send message without getting user's
+address???) and sender email address (same here...)
+'''
 
 HTTP_USER_AGENT_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_HTTP_USER_AGENT_HEADER', 'HTTP_USER_AGENT')
 HTTP_IP_ADDRESS_HEADER = getattr(settings, 'DJANGO_REST_PASSWORDRESET_IP_ADDRESS_HEADER', 'REMOTE_ADDR')
+
 
 class HttpRes(object):
     def __init__(self, user=None, **args):

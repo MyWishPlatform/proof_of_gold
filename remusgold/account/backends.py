@@ -2,6 +2,7 @@ from django.contrib.auth.backends import ModelBackend
 
 from remusgold.account.models import AdvUser
 
+
 class EmailModelBackend(ModelBackend):
     """
     authentication class to login with the email address.

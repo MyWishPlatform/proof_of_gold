@@ -85,7 +85,10 @@ class GetPaymentsView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 class GetSinglePaymentView(APIView):
-
+    '''
+    deprecated view for getting single payment (frontend doesn't use it due to GetPaymentsView() is enough).
+    #TODO: delete it if frontend will not use it for sure or update with changes similar to GetPaymentsView()
+    '''
     @swagger_auto_schema(
         operation_description="get single user's payment",
         responses={200: get_single_response},
@@ -101,7 +104,9 @@ class GetSinglePaymentView(APIView):
 
 
 class CreatePaymentView(APIView):
-
+    '''
+    Creating order, cancelling previous order if found.
+    '''
     @swagger_auto_schema(
         operation_description="post user's payments",
         request_body=openapi.Schema(
@@ -134,19 +139,20 @@ class CreatePaymentView(APIView):
     def post(self, request, token):
         request_data = request.data
         print(request_data)
-        usd_amount = 0
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         currency = request_data.get('currency')
+
+        #cancelling previous order if found (only 1 order can be active for paying in crypto)
         previous = Order.objects.filter(user=user).filter(status="WAITING_FOR_PAYMENT")
         for prev in previous:
             if prev:
                 prev.status="CANCELLED"
                 prev.save()
-
-
         order = Order(user=user, currency = currency)
         order.save()
+
+        #saving payment unique ShippingAddress if it is not saved in user info
         shipping_address = request.data.get('shipping_address')
         if shipping_address:
             address = ShippingAddress()
@@ -156,22 +162,25 @@ class CreatePaymentView(APIView):
             serializer = PatchShippingAddressSerializer(address, data=request.data.get('shipping_address'), partial=True)
             if serializer.is_valid():
                 serializer.save()
+
+        #save items in order, calculate total amount and fix current rates
         for request in request_data.get('items'):
             item_id = request.get('item_id')
             quantity = request.get('quantity')
             payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()
-
         order.get_required_amount()
         order.fix_rates()
 
         response_data = {"id": order.id}
-
         return Response(response_data, status=status.HTTP_200_OK)
 
 
 class CheckActive(APIView):
-
+    '''
+    Checking user's payment status.
+    Polling by frontend for cart reset.
+    '''
     @swagger_auto_schema(
         operation_description="check user's payments status",
         responses={200: 'OK'},

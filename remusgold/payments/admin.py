@@ -1,7 +1,8 @@
 from django.contrib import admin
+
 from remusgold.payments.models import Payment, Order
 
-# Register your models here.
+
 class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
 

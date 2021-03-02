@@ -5,7 +5,6 @@ from remusgold.vouchers.models import Voucher
 from remusgold.consts import DECIMALS
 from remusgold.transfers.api import eth_return_transfer, btc_return_transfer
 from remusgold.account.models import get_mail_connection
-#from remusgold.templates.email.payment_letter_body import order_body, order_style, item_body, ending_body
 from remusgold.templates.email.payment_letter_body2 import order_body, item_body, ending_body
 from django.core.mail import send_mail
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
@@ -16,7 +15,9 @@ class TransferException(Exception):
     pass
 
 def parse_payment_message(message):
-    #FINDING ORDER
+    '''
+    searching for active order, comparing payment amount and order amount, proceed to specific functions in each case
+    '''
     orders = Order.objects.filter(user_id=message['userID']).filter(status__in=('WAITING_FOR_PAYMENT', 'UNDERPAYMENT'))
     active_order = False
     if not orders:
@@ -46,6 +47,9 @@ def parse_payment_message(message):
         return 'correct payment'
 
 def process_correct_payment(active_order):
+    '''
+    correcting items quantities, creating Ducatus voucher, sending mail with payment info to user
+    '''
     active_order.status = "PAID"
     active_order.save()
     payments = Payment.objects.filter(order=active_order)
@@ -70,34 +74,35 @@ def process_correct_payment(active_order):
         print(html_break)
 
         html_item = item_body.format(
-            item_name = html_break[1], weight = html_break[0], amount = item.price,
-            bonus = item.ducatus_bonus, paid_by = paid_by,
+            item_name=html_break[1], weight=html_break[0], amount=item.price,
+            bonus=item.ducatus_bonus, paid_by=paid_by,
         )
-        html_items+=html_item
+        html_items += html_item
 
     voucher = Voucher(
         payment=payments[0],
         user=AdvUser.objects.get(id=active_order.user_id),
         usd_amount=usd_amount)
     voucher.save()
-    voucher.activation_code='PG-'+voucher.activation_code
+    voucher.activation_code = 'PG-'+voucher.activation_code
     voucher.save()
     user = AdvUser.objects.get(id=active_order.user_id)
-    shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
+    if not Order.shipping_address:
+        shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
+    else:
+        shipping = Order.ShippingAddress
     connection = get_mail_connection()
     if shipping.county:
         delivery_address = shipping.country + ', ' + shipping.county + ', ' + shipping.town + ', ' + shipping.full_address
     else:
         delivery_address = shipping.country + ',' + shipping.town + ', ' + shipping.full_address
     html_body = order_body.format(
-        order_number = active_order.id,
-        first_name = shipping.first_name, last_name = shipping.last_name, email = user.email,
-        phone = shipping.phone, payments = payments,
-        delivery_address = delivery_address,
+        order_number=active_order.id,
+        first_name=shipping.first_name, last_name=shipping.last_name, email=user.email,
+        phone=shipping.phone, payments=payments,
+        delivery_address=delivery_address,
     )
-    html_ending = ending_body.format(code = voucher.activation_code)
-
-
+    html_ending = ending_body.format(code=voucher.activation_code)
 
     send_mail(
         'Payment Confirmation',
@@ -105,13 +110,16 @@ def process_correct_payment(active_order):
         EMAIL_HOST_USER,
         [user.email],
         connection=connection,
-        html_message = html_body + html_items + html_ending,
+        html_message=html_body + html_items + html_ending,
     )
 
 def process_overpayment(active_order, message):
+    '''
+    return overpayment after processing correct payment.
+    USDC overpayment was cut off due to enormous problems with calculating and inkassating transaction fee from paid amount
+    '''
     currency = message['currency']
     delta = (float(active_order.received_usd_amount) - float(active_order.required_usd_amount)) /float(getattr(active_order, f'fixed_{currency.lower()}_rate')) * DECIMALS[currency]
-    order_currency = active_order.currency
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, int(delta), message)
     if currency == 'USDC':
@@ -122,8 +130,10 @@ def process_overpayment(active_order, message):
     active_order.save()
 
 def process_underpayment(active_order, message):
+    '''
+    logic is similar to overpayment except returning full sum except transaction fee
+    '''
     currency = message['currency']
-    order_currency = active_order.currency
     if currency == 'ETH':
         return_transfer = eth_return_transfer(active_order, message['amount'], message)
     if currency == 'USDC':

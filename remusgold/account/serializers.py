@@ -6,6 +6,9 @@ from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_US
 
 
 class PatchSerializer(serializers.ModelSerializer):
+    '''
+    Serialiser for AdvUser model patching
+    '''
     new_password = serializers.CharField()
     class Meta:
         model = AdvUser
@@ -27,7 +30,11 @@ class PatchSerializer(serializers.ModelSerializer):
         return instance
 
 
+
 class PatchShippingAddressSerializer(serializers.ModelSerializer):
+    '''
+    Serialiser for ShippingAddress model patching
+    '''
     class Meta:
         model = ShippingAddress
         fields = '__all__'
@@ -41,6 +48,9 @@ class PatchShippingAddressSerializer(serializers.ModelSerializer):
 
 
 class PatchBillingAddressSerializer(serializers.ModelSerializer):
+    '''
+    Serialiser for BillingAddress model patching
+    '''
     class Meta:
         model = BillingAddress
         fields = '__all__'

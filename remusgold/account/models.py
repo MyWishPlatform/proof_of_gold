@@ -21,6 +21,9 @@ from remusgold.templates.email.activation_letter_body2 import activation_body
 
 
 class AdvUser(AbstractUser):
+    '''
+    Main user model.
+    '''
     is_activated = models.BooleanField(default=False)
     email = models.EmailField(verbose_name='email address',
     max_length=255, unique=True)
@@ -45,13 +48,43 @@ class AdvUser(AbstractUser):
         self.save()
 
 
+'''
+3 functions below are for sending activation message after user creation
+'''
+
 def user_registrated_dispatcher(sender, instance, created, **kwargs):
-    print('got here')
     if created:
         send_activation_notification(instance)
 
 
 post_save.connect(user_registrated_dispatcher, sender=AdvUser)
+
+def get_mail_connection():
+    return get_connection(
+        host=EMAIL_HOST,
+        port=EMAIL_PORT,
+        username=EMAIL_HOST_USER,
+        password=EMAIL_HOST_PASSWORD,
+        use_tls=EMAIL_USE_TLS,
+    )
+
+def send_activation_notification(user):
+    #user = AdvUser.objects.get(id=id)
+    signer = Signer()
+    token=signer.sign(user.username)
+    connection = get_mail_connection()
+    html_body = activation_body.format(
+        token=token,
+    )
+    send_mail(
+        'Registration on Proof of Gold',
+        '',
+        EMAIL_HOST_USER,
+        [user.email],
+        connection=connection,
+        html_message=html_body,
+        )
+
 
 
 class BillingAddress(models.Model):
@@ -80,31 +113,8 @@ class ShippingAddress(models.Model):
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
+    """
+    function for creating user's authentication token
+    """
     if created:
         Token.objects.create(user=instance)
-
-def get_mail_connection():
-    return get_connection(
-        host=EMAIL_HOST,
-        port=EMAIL_PORT,
-        username=EMAIL_HOST_USER,
-        password=EMAIL_HOST_PASSWORD,
-        use_tls=EMAIL_USE_TLS,
-    )
-
-def send_activation_notification(user):
-    #user = AdvUser.objects.get(id=id)
-    signer = Signer()
-    token=signer.sign(user.username)
-    connection = get_mail_connection()
-    html_body = activation_body.format(
-        token=token,
-    )
-    send_mail(
-        'Registration on Proof of Gold',
-        '',
-        EMAIL_HOST_USER,
-        [user.email],
-        connection=connection,
-        html_message=html_body,
-        )

@@ -9,11 +9,14 @@ from remusgold.account.models import AdvUser
 from remusgold.settings import NETWORK_SETTINGS, ROOT_KEYS, USDC_CONTRACT
 from utils.private_keys_generation import get_private_keys
 from remusgold.consts import DECIMALS
-from remusgold.bitcoin_api import BitcoinRPC, BitcoinAPI #present?
+from remusgold.bitcoin_api import BitcoinRPC, BitcoinAPI
 from remusgold.rates.models import UsdRate
 
 
 def withdraw_funds():
+    '''
+    Withdrawing funds. Executed by withdraw_funds command in manage.py
+    '''
     withdraw_parameters = {
         'root_private_key': ROOT_KEYS['mainnet']['private'],
         'root_public_key': ROOT_KEYS['mainnet']['public'],
@@ -100,8 +103,6 @@ def check_tx_success(tx):
 
 
 def check_tx(tx):
-    tx_found = False
-
     print(f'Checking transaction {tx} until found in network', flush=True)
     tx_found = check_tx_success(tx)
     if tx_found:
