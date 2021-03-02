@@ -19,12 +19,13 @@ class Item(models.Model):
     name = models.CharField(max_length=300)
     images = models.ImageField(blank=True, upload_to=get_timestamp_path)
     total_supply = models.IntegerField()
-    ducatus_bonus = models.IntegerField()
+    ducatus_bonus = models.FloatField()
     lucky_prize = models.FloatField()
     supply = models.IntegerField()
     sold = models.IntegerField()
     price = models.FloatField()
     description = models.CharField(max_length=1000)
+    winner = models.CharField(max_length=254, default=None, null=True, blank=True)
 
     def __str__(self):
         return self.name

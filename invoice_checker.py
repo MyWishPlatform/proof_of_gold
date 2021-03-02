@@ -14,6 +14,9 @@ from remusgold.payments.models import Order
 
 if __name__ == '__main__':
     while True:
+        '''
+        checking if order is expired
+        '''
         orders = Order.objects.filter(status="WAITING_FOR_PAYMENT")
         for order in orders:
             if not order.is_active():
