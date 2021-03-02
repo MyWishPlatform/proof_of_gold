@@ -15,3 +15,4 @@ python-bitcoinrpc==1.0
 geoip2
 pika
 web3==5.13.0
+gunicorn==20.0.4
