@@ -169,6 +169,11 @@ class CreatePaymentView(APIView):
             quantity = request.get('quantity')
             payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()
+            item = Item.objects.get(id=item_id)
+            item.reserved += payment.quantity
+            item.supply -= payment.quantity
+            item.save()
+
         order.get_required_amount()
         order.fix_rates()
 

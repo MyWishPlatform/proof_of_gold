@@ -65,4 +65,3 @@ class Payment(models.Model):
     order = models.ForeignKey('payments.Order', on_delete=models.CASCADE)
     item = models.ForeignKey('store.Item', on_delete=models.CASCADE)
     quantity = models.IntegerField()
-    currency = models.CharField(max_length=10)

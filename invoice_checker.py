@@ -10,7 +10,8 @@ import django
 
 django.setup()
 
-from remusgold.payments.models import Order
+from remusgold.payments.models import Order, Payment
+from remusgold.store.models import Item
 
 if __name__ == '__main__':
     while True:
@@ -22,5 +23,11 @@ if __name__ == '__main__':
             if not order.is_active():
                 order.status = "EXPIRED"
                 order.save()
+                payments = Payment.objects.filter(order=order)
+                for payment in payments:
+                    item = Item.objects.get(id=payment.item_id)
+                    item.supply += payment.quantity
+                    item.reserved -= payment.quantity
+                    item.save()
         print('sleeping')
         time.sleep(600)

@@ -51,7 +51,7 @@ if __name__ == '__main__':
         print('Starting Polling')
         items = Item.objects.all()
         for item in items:
-            if item.supply == 0 and not item.winner:
+            if item.total_supply == item.sold and not item.winner:
                 print(f'\nStarting lottery for item {item.name}')
                 winner = finalize_lottery(item)
                 item.winner = winner

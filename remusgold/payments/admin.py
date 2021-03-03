@@ -9,11 +9,10 @@ class PaymentAdmin(admin.ModelAdmin):
 class PaymentInline(admin.TabularInline):
     model = Payment
     readonly_fields = ('id',)
-    ordering=['-updated_at']
 
 class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
-    inlines = (LoggingInline,)
+    inlines = (PaymentInline,)
 
 
 admin.site.register(Payment, PaymentAdmin)
