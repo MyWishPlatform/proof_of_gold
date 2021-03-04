@@ -25,7 +25,8 @@ class Voucher(models.Model):
     activation_datetime = models.DateTimeField(null=True, default=None)
 
     def activate(self, address):
-        token_amount = json.loads(requests.get(RATES_API_URL.format(fsym='DUC', tsyms='USD')).content).get('USD')
+        rate = json.loads(requests.get(RATES_API_URL.format(fsym='DUC', tsyms='USD')).content).get('USD')
+        token_amount = int(int(self.usd_amount * (DECIMALS['DUC']))/rate)
         transfer = Transfer(
             voucher=self,
             amount=token_amount,
