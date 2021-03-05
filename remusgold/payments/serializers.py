@@ -23,12 +23,9 @@ class PaymentSerializer(serializers.ModelSerializer):
         return payments
 
     def create(self, validated_data):
-        quantity= validated_data.get('quantity')
+        quantity = validated_data.get('quantity')
         payment = Payment.objects.create(**validated_data)
         item = Item.objects.get(id=payment.item_id)
-        item.sold+=quantity
-        item.supply-=quantity
-        item.save()
         return payment
 
     def update(self, instance, validated_data):

@@ -45,6 +45,7 @@ urlpatterns = [
     path('api/v1/payments/', include('remusgold.payments.urls')),
     path('api/v1/account/', include('remusgold.account.urls', namespace='password_reset')),
     path('api/v1/vouchers/', include('remusgold.vouchers.urls')),
+    path('api/v1/rates/', include('remusgold.rates.urls')),
 ]
 
 urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)

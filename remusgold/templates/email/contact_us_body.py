@@ -1,4 +1,4 @@
-password_style = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+contact_us_style = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -105,7 +105,7 @@ password_style = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//E
       }
     </style>
   </head>"""
-password_body ="""<body ducatus bgcolor="#000">
+contact_us_body ="""<body ducatus bgcolor="#000">
     <table
       width="100%"
       bgcolor="#000"
@@ -139,7 +139,7 @@ password_body ="""<body ducatus bgcolor="#000">
               <td style="padding-bottom: 50px">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td class="accent">Forgot Password</td>
+                    <td class="accent">CONTACT US MESSAGE</td>
                   </tr>
                 </table>
               </td>
@@ -152,44 +152,8 @@ password_body ="""<body ducatus bgcolor="#000">
                   </tr>
                   <tr>
                     <td class="text text-cont">
-                      You recently requested to reset password for your POG
-                      account {account}. Click below to reset it.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="text-cont">
-                      <a
-                        class="link text-bold"
-                        href="https://proofofgold.herokuapp.com/change/{token}"
-                        >https://proofofgold.herokuapp.com/change/{token}</a
-                      >
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td class="info">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td class="text-sm">
-                      This link will automatically expire in 24 hours. If you did
-                      not request to reset your password, please ignore this
-                      email.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="text-md text-group text-bold">The POG Team</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td class="footer">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td class="text-footer">
-                      @2020 Proof of Gold All rights reserved.
+                        Someone named {user} with email {email} left message in contact us form:
+                        {message}
                     </td>
                   </tr>
                 </table>

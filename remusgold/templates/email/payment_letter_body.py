@@ -135,7 +135,7 @@ order_body = """<body ducatus bgcolor="#000">
               <td style="border-radius: 0px" class="header">
                 <img
                   class="fix"
-                  src="https://proofofgold.herokuapp.com/logo-mail.svg"
+                  src="https://devgold.rocknblock.io/media/logo.png"
                   width="108"
                   height="80"
                   border="0"
@@ -148,7 +148,7 @@ order_body = """<body ducatus bgcolor="#000">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td class="accent">
-                      Your order is confirmed (ORDER NUMBER)
+                      Your order is confirmed {order_number}
                     </td>
                   </tr>
                 </table>
@@ -252,7 +252,7 @@ ending_body = """<tr>
                   </tr>
                   <tr>
                     <td class="text">
-                      Input this Confirmation Code (xxxxxx) and the address of
+                      Input this Confirmation Code {code} and the address of
                       the wallet where you want to send your Ducatus Coins.
                     </td>
                   </tr>
@@ -280,7 +280,7 @@ ending_body = """<tr>
                       >
                     </td>
                   </tr>
-                  <tr>payments = payments,
+                  <tr>
                     <td class="text-sm text-cont">Mobile</td>
                   </tr>
                   <tr>

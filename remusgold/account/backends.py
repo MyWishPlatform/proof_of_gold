@@ -1,5 +1,7 @@
 from django.contrib.auth.backends import ModelBackend
+
 from remusgold.account.models import AdvUser
+
 
 class EmailModelBackend(ModelBackend):
     """

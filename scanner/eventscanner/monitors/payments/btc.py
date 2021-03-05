@@ -38,7 +38,7 @@ class BTCPaymentMonitor:
                         continue
 
                     message = {
-                        'userId': model.id,
+                        'userID': model.id,
                         'address': address,
                         'transactionHash': transaction.tx_hash,
                         'currency': cls.currency,

@@ -8,6 +8,10 @@ from rest_framework.decorators import api_view
 
 from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
+from remusgold.account.models import get_mail_connection
+from remusgold.templates.email.contact_us_body import contact_us_body, contact_us_style
+from django.core.mail import send_mail
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 
 group_response = openapi.Response(
     description='Response with all items in category',
@@ -111,7 +115,9 @@ search_response = openapi.Response(
     ))
 )
 class GroupView(APIView):
-
+    '''
+    get all items in category
+    '''
     @swagger_auto_schema(
         operation_description="get all items by group",
         responses={200: group_response},
@@ -131,8 +137,9 @@ class GroupView(APIView):
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name,
                               'image': ALLOWED_HOSTS[0] + item.images.url,
-                              'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold,
-                              'price': item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
+                              'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved,
+                              'sold': item.sold, 'price': item.price, 'description': item.description,
+                              'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -141,7 +148,9 @@ class GroupView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 class StoreView(APIView):
-
+    '''
+    get all existing items
+    '''
     @swagger_auto_schema(
         operation_description="get all items",
         responses={200: store_response},
@@ -159,8 +168,9 @@ class StoreView(APIView):
                         {'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                    'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
-                    'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
+                    'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'sold': item.sold,
+                    'price': item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus,
+                    'lucky_prize': item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -170,7 +180,10 @@ class StoreView(APIView):
 
 
 class UniqueView(APIView):
-
+    '''
+    get single item.
+    Maybe is deprecated due to frontend not using it (check).
+    '''
     @swagger_auto_schema(
         operation_description="get single item",
         responses={200: unique_response},
@@ -181,19 +194,22 @@ class UniqueView(APIView):
         review_list = []
         for review in reviews:
             if review.active:
-                review_list.append({'rate': review.rate, 'body': review.body, 'name':review.name, 'email': review.email,
+                review_list.append({'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                                     'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
-        res_item= {'id': item.id, 'group': item.group.name, 'name': item.name,
-                'total_supply':item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                'sold': item.sold, 'price':item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list}
-        response_data =res_item
+        res_item = {'id': item.id, 'group': item.group.name, 'name': item.name,
+                'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'image': ALLOWED_HOSTS[0] + item.images.url,
+                'sold': item.sold, 'price':item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus,
+                'lucky_prize': item.lucky_prize, 'reviews': review_list}
+        response_data = res_item
         print('res:', response_data)
 
         return Response(response_data, status=status.HTTP_200_OK)
 
 
 class ReviewView(APIView):
-
+    '''
+    View for posting review. get is included in item views
+    '''
     @swagger_auto_schema(
         operation_description="post review",
         request_body=openapi.Schema(
@@ -217,7 +233,7 @@ class ReviewView(APIView):
         body = request_data.get('body')
         name = request_data.get('name')
         email = request_data.get('email')
-        review = Review(item_id=item_id, rate=rate, body=body, name=name, email = email)
+        review = Review(item_id=item_id, rate=rate, body=body, name=name, email=email)
         review.save()
         response_data = {'id': review.id, 'item_id': review.item_id, 'rate': review.rate, 'body': review.body,
                          'name': review.name, 'email': review.email, 'created_at': review.created_date}
@@ -225,7 +241,10 @@ class ReviewView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 class SearchView(APIView):
-
+    '''
+    View for search items in shop.
+    searching has simple 'contains' logic.
+    '''
     @swagger_auto_schema(
         operation_description="post search pattern",
         request_body=openapi.Schema(
@@ -245,7 +264,7 @@ class SearchView(APIView):
         for word in words:
             items = items.filter(name__icontains=word)
         print(items.__dict__)
-        search_result =[]
+        search_result = []
         for item in items:
             reviews = Review.objects.filter(item=item)
             review_list = []
@@ -255,6 +274,45 @@ class SearchView(APIView):
                         {'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             search_result.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                    'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
+                    'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'sold': item.sold, 'price': item.price,
                     'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         return Response(search_result, status=status.HTTP_200_OK)
+
+
+
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
+            'message': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+        required=['api_key', 'data']
+    ),
+)
+@api_view(http_method_names=['POST'])
+def contact_us(request):
+    '''
+    view for contact us form, which sends message to shop's email.
+    Placed in store because I didn't found better place.
+    '''
+    request_data = request.data
+    name = request_data.get('name')
+    email = request_data.get('email')
+    message = request_data.get('message')
+
+    connection = get_mail_connection()
+    html_body = contact_us_body.format(user=name, email=email, message=message)
+
+    send_mail(
+        'contact_us_form',
+        '',
+        EMAIL_HOST_USER,
+        [EMAIL_HOST_USER],
+        connection=connection,
+        html_message=contact_us_style + html_body,
+    )
+    print('message sent')
+    return Response('OK', status=status.HTTP_200_OK)
