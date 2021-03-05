@@ -1,3 +1,6 @@
+import datetime
+import time
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,11 +10,13 @@ from rest_framework.request import Request
 from rest_framework.decorators import api_view
 
 from remusgold.payments.models import Payment, Order
+from remusgold.payments.paypal import GetOrder
 from remusgold.store.models import Item
 from remusgold.account.models import AdvUser, Token, ShippingAddress
 from remusgold.account.serializers import PatchShippingAddressSerializer
 from remusgold.vouchers.models import Voucher
 from remusgold.settings import ALLOWED_HOSTS
+from remusgold.payments.api import process_correct_payment
 # Create your views here.
 
 
@@ -119,7 +124,8 @@ class CreatePaymentView(APIView):
                        'quantity': openapi.Schema(type=openapi.TYPE_NUMBER),
                         },
                     ),),
-                'currency': openapi.Schema(type = openapi.TYPE_STRING),
+                'currency': openapi.Schema(type=openapi.TYPE_STRING),
+                'paypal_id': openapi.Schema(type=openapi.TYPE_STRING),
                 'shipping_address': openapi.Schema(type=openapi.TYPE_OBJECT,
                     properties={
                         'first_name': openapi.Schema(type=openapi.TYPE_STRING),
@@ -142,6 +148,7 @@ class CreatePaymentView(APIView):
         token = Token.objects.get(key=token)
         user = AdvUser.objects.get(id=token.user_id)
         currency = request_data.get('currency')
+        paypal_id = request.data.get('paypal_id')
 
         #cancelling previous order if found (only 1 order can be active for paying in crypto)
         previous = Order.objects.filter(user=user).filter(status="WAITING_FOR_PAYMENT")
@@ -149,9 +156,20 @@ class CreatePaymentView(APIView):
             if prev:
                 prev.status="CANCELLED"
                 prev.save()
-        order = Order(user=user, currency = currency)
+                prev_payments = Payment.objects.filter(order=prev)
+                for payment in prev_payments:
+                    item = Item.objects.get(id=payment.item_id)
+                    item.supply += payment.quantity
+                    item.reserved -= payment.quantity
+                    item.save()
+        order = Order(user=user, currency=currency)
         order.save()
 
+        #check paypal currency
+        if currency == 'paypal':
+            res = check_paypal(paypal_id)
+            if res != True:
+                return Response(res, status=status.HTTP_400_BAD_REQUEST)
         #saving payment unique ShippingAddress if it is not saved in user info
         shipping_address = request.data.get('shipping_address')
         if shipping_address:
@@ -169,10 +187,17 @@ class CreatePaymentView(APIView):
             quantity = request.get('quantity')
             payment = Payment(order=order, item_id=item_id, quantity=quantity)
             payment.save()
+            item = Item.objects.get(id=item_id)
+            item.reserved += payment.quantity
+            item.supply -= payment.quantity
+            item.save()
+
         order.get_required_amount()
         order.fix_rates()
 
         response_data = {"id": order.id}
+        if currency == 'paypal':
+            process_correct_payment(order)
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -198,3 +223,23 @@ class CheckActive(APIView):
                 return Response('WAITING_FOR_PAYMENT', status=status.HTTP_200_OK)
         except:
             return Response('NO_ORDER', status=status.HTTP_200_OK)
+
+
+def check_paypal(paypal_id):
+    try:
+        paypal_payment = GetOrder().get_order(paypal_id)
+        print(paypal_payment.__dict__)
+    except Exception as e:
+        print(e)
+        return {'error': 'could not get info from paypal'}
+    status = paypal_payment.result.status
+    print(status)
+    correct_date = paypal_payment.result.create_time
+    date = datetime.datetime.strptime(correct_date.replace('T', '-').replace('Z', ''), '%Y-%m-%d-%H:%M:%S')
+    print(date)
+    merchant = paypal_payment.result.purchase_units[0]['payee']['merchant_id']
+    print(merchant)
+    if status == 'COMPLETED' and merchant == 'ECMHZAXMARXAW' and (datetime.datetime.now() - date) < datetime.timedelta(hours=10):
+        return True
+    else:
+        return {'error': 'invalid paypal payment'}

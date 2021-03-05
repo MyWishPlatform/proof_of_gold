@@ -1,9 +1,13 @@
 import secrets
+import requests
+import json
+
 from django.db import models
 from django.utils import timezone
 from remusgold.consts import DECIMALS
 from remusgold.transfers.models import Transfer
 from remusgold.transfers.api import duc_transfer
+from remusgold.settings_local import RATES_API_URL
 
 class Voucher(models.Model):
     '''
@@ -21,7 +25,8 @@ class Voucher(models.Model):
     activation_datetime = models.DateTimeField(null=True, default=None)
 
     def activate(self, address):
-        token_amount = int(int(self.usd_amount * (DECIMALS['DUC']))/0.06)
+        rate = json.loads(requests.get(RATES_API_URL.format(fsym='DUC', tsyms='USD')).content).get('USD')
+        token_amount = int(int(self.usd_amount * (DECIMALS['DUC']))/rate)
         transfer = Transfer(
             voucher=self,
             amount=token_amount,

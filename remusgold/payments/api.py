@@ -36,6 +36,12 @@ def parse_payment_message(message):
     if float(active_order.received_usd_amount) < 0.995 * float(active_order.required_usd_amount):
         active_order.status = 'UNDERPAYMENT'
         active_order.save()
+        payments = Payment.objects.filter(order=active_order)
+        for payment in payments:
+            item = Item.objects.get(id=payment.item_id)
+            item.supply += payment.quantity
+            item.reserved -= payment.quantity
+            item.save()
         process_underpayment(active_order, message)
         return 'underpayment'
     elif float(active_order.received_usd_amount) > 1.05 * float(active_order.required_usd_amount):
@@ -61,12 +67,14 @@ def process_correct_payment(active_order):
         paid_by = 'BTC'
     elif active_order.currency == 'USDC':
         paid_by = 'USDC'
+    elif active_order.currency == 'paypal':
+        paid_by = 'paypal'
     else:
         paid_by = 'Credit Card'
     for payment in payments:
         item = Item.objects.get(id=payment.item_id)
         item.sold += payment.quantity
-        item.supply -= payment.quantity
+        item.reserved -= payment.quantity
         item.save()
 
         usd_amount += item.price * payment.quantity * item.ducatus_bonus / 100
@@ -74,7 +82,7 @@ def process_correct_payment(active_order):
         print(html_break)
 
         html_item = item_body.format(
-            item_name=html_break[1], weight=html_break[0], amount=item.price,
+            item_name=html_break[1], weight=html_break[0], amount=item.price * payment.quantity,
             bonus=item.ducatus_bonus, paid_by=paid_by,
         )
         html_items += html_item
@@ -87,10 +95,10 @@ def process_correct_payment(active_order):
     voucher.activation_code = 'PG-'+voucher.activation_code
     voucher.save()
     user = AdvUser.objects.get(id=active_order.user_id)
-    if not Order.shipping_address:
+    if not active_order.shipping_address:
         shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
     else:
-        shipping = Order.ShippingAddress
+        shipping = active_order.shipping_address
     connection = get_mail_connection()
     if shipping.county:
         delivery_address = shipping.country + ', ' + shipping.county + ', ' + shipping.town + ', ' + shipping.full_address
@@ -131,7 +139,7 @@ def process_overpayment(active_order, message):
 
 def process_underpayment(active_order, message):
     '''
-    logic is similar to overpayment except returning full sum except transaction fee
+    after that, logic is similar to overpayment except returning full sum except transaction fee
     '''
     currency = message['currency']
     if currency == 'ETH':
