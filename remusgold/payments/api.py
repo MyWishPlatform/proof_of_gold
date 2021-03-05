@@ -67,6 +67,8 @@ def process_correct_payment(active_order):
         paid_by = 'BTC'
     elif active_order.currency == 'USDC':
         paid_by = 'USDC'
+    elif active_order.currency == 'paypal':
+        paid_by = 'paypal'
     else:
         paid_by = 'Credit Card'
     for payment in payments:
@@ -80,7 +82,7 @@ def process_correct_payment(active_order):
         print(html_break)
 
         html_item = item_body.format(
-            item_name=html_break[1], weight=html_break[0], amount=item.price,
+            item_name=html_break[1], weight=html_break[0], amount=item.price * payment.quantity,
             bonus=item.ducatus_bonus, paid_by=paid_by,
         )
         html_items += html_item
