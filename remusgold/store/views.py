@@ -310,7 +310,7 @@ def contact_us(request):
         'contact_us_form',
         '',
         EMAIL_HOST_USER,
-        [EMAIL_HOST_USER],
+        ['INFO@D-POG.com'],
         connection=connection,
         html_message=contact_us_style + html_body,
     )

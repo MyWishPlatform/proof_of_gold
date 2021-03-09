@@ -239,7 +239,7 @@ def check_paypal(paypal_id):
     print(date)
     merchant = paypal_payment.result.purchase_units[0]['payee']['merchant_id']
     print(merchant)
-    if status == 'COMPLETED' and merchant == 'ECMHZAXMARXAW' and (datetime.datetime.now() - date) < datetime.timedelta(hours=10):
+    if status in ('COMPLETED', 'APPROVED') and merchant == 'ECMHZAXMARXAW' and (datetime.datetime.now() - date) < datetime.timedelta(hours=4):
         return True
     else:
         return {'error': 'invalid paypal payment'}
