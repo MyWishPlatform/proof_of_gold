@@ -423,7 +423,7 @@ ending_body = """<tr>
                         style="color: transparent; opacity: 0.5"
                       >
                         <img
-                          src="https://proofofgold.herokuapp.com/google.svg"
+                          src="https://d-pog.com/google.svg"
                           alt=""
                           style="height: auto"
                         />
@@ -434,7 +434,7 @@ ending_body = """<tr>
                         style="color: transparent; opacity: 0.5"
                       >
                         <img
-                          src="https://proofofgold.herokuapp.com/apple.svg"
+                          src="https://d-pog.com/apple.svg"
                           alt=""
                           style="height: auto"
                         />

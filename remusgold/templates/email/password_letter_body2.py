@@ -119,14 +119,14 @@ password_body ="""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
                     <td class="text-cont" style="padding-top: 25px">
                       <a
                         class="link text-bold"
-                        href="https://proofofgold.herokuapp.com/change/{token}"
+                        href="https://d-pog.com/change/{token}"
                         style="
                           font-weight: 700;
                           color: #fac929;
                           font-size: 18px;
                           line-height: 21px;
                         "
-                        >https://proofofgold.herokuapp.com/change/{token}</a
+                        >https://d-pog.com/change/{token}</a
                       >
                     </td>
                   </tr>
