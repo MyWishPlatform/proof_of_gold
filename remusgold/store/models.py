@@ -25,7 +25,7 @@ class Item(models.Model):
     reserved = models.IntegerField(default=0)
     sold = models.IntegerField(default=0)
     price = models.FloatField()
-    description = models.CharField(max_length=1000)
+    description = models.CharField(max_length=1000, null=True, blank=True)
     winner = models.CharField(max_length=254, default=None, null=True, blank=True)
 
     def __str__(self):
