@@ -132,14 +132,14 @@ activation_body = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//
                     <td class="text-cont" style="padding-top: 25px">
                       <a
                         class="link text-bold"
-                        href="https://proofofgold.herokuapp.com/verify/{token}"
+                        href="https://d-pog.com/verify/{token}"
                         style="
                           font-weight: 700;
                           color: #fac929;
                           font-size: 18px;
                           line-height: 21px;
                         "
-                        >https://proofofgold.herokuapp.com/verify/{token}</a
+                        >https://d-pog.com/verify/{token}</a
                       >
                     </td>
                   </tr>

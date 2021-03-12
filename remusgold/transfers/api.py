@@ -73,7 +73,6 @@ def btc_return_transfer(order, amount, message):
     return_address, ok_response = api.get_return_address(message['transactionHash'])
     if not ok_response:
         print('BTC REFUND FAILED: Cannot get return address', flush=True)
-        print('tx hash', tx_hash, flush=True)
         return
 
     user = AdvUser.objects.get(id=order.user_id)

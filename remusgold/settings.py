@@ -33,7 +33,7 @@ SECRET_KEY = 'uo_w3i7*hvw%@)y32ct05pz17q@it8bk8emah=8!as&u64yy3e'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ 'devgold.rocknblock.io', '5.9.121.164', '127.0.0.1']
+ALLOWED_HOSTS = ['d-pog.com', 'devgold.rocknblock.io', '5.9.121.164', '127.0.0.1']
 
 
 # Application definition
@@ -65,6 +65,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'remusgold.middleware.csrf_middleware.CSRFMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -166,7 +167,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/django-static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

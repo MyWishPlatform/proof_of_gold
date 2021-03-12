@@ -5,6 +5,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.request import Request
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from remusgold.store.models import Item, Group, Review
 from remusgold.settings import ALLOWED_HOSTS
@@ -137,9 +139,9 @@ class GroupView(APIView):
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name,
                               'image': ALLOWED_HOSTS[0] + item.images.url,
-                              'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold,
-                              'price': item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus,
-                              'lucky_prize':item.lucky_prize, 'reviews': review_list})
+                              'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved,
+                              'sold': item.sold, 'price': item.price, 'description': item.description,
+                              'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -168,9 +170,9 @@ class StoreView(APIView):
                         {'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             item_list.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                    'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
-                    'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize': item.lucky_prize,
-                    'reviews': review_list})
+                    'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'sold': item.sold,
+                    'price': item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus,
+                    'lucky_prize': item.lucky_prize, 'reviews': review_list})
         response_data = {
             'items': item_list,
         }
@@ -197,7 +199,7 @@ class UniqueView(APIView):
                 review_list.append({'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                                     'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
         res_item = {'id': item.id, 'group': item.group.name, 'name': item.name,
-                'total_supply': item.total_supply, 'supply': item.supply, 'image': ALLOWED_HOSTS[0] + item.images.url,
+                'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'image': ALLOWED_HOSTS[0] + item.images.url,
                 'sold': item.sold, 'price':item.price, 'description': item.description, 'bonus_coins': item.ducatus_bonus,
                 'lucky_prize': item.lucky_prize, 'reviews': review_list}
         response_data = res_item
@@ -205,7 +207,8 @@ class UniqueView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
+      
+@method_decorator(csrf_exempt, name='dispatch')
 class ReviewView(APIView):
     '''
     View for posting review. get is included in item views
@@ -240,6 +243,8 @@ class ReviewView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+
+@method_decorator(csrf_exempt, name='dispatch')
 class SearchView(APIView):
     '''
     View for search items in shop.
@@ -274,7 +279,7 @@ class SearchView(APIView):
                         {'rate': review.rate, 'body': review.body, 'name': review.name, 'email': review.email,
                          'created_at': review.created_date.strftime("%m/%d/%Y, %H:%M:%S")})
             search_result.append({'id': item.id, 'group': item.group.name, 'name': item.name, 'image': ALLOWED_HOSTS[0] + item.images.url,
-                    'total_supply': item.total_supply, 'supply': item.supply, 'sold': item.sold, 'price': item.price,
+                    'total_supply': item.total_supply, 'supply': item.supply, 'reserved': item.reserved, 'sold': item.sold, 'price': item.price,
                     'description': item.description, 'bonus_coins': item.ducatus_bonus, 'lucky_prize':item.lucky_prize, 'reviews': review_list})
         return Response(search_result, status=status.HTTP_200_OK)
 
@@ -292,6 +297,8 @@ class SearchView(APIView):
         required=['api_key', 'data']
     ),
 )
+
+
 @api_view(http_method_names=['POST'])
 def contact_us(request):
     '''
@@ -310,7 +317,7 @@ def contact_us(request):
         'contact_us_form',
         '',
         EMAIL_HOST_USER,
-        [EMAIL_HOST_USER],
+        ['INFO@D-POG.com'],
         connection=connection,
         html_message=contact_us_style + html_body,
     )
