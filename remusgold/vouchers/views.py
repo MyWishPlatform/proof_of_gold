@@ -5,6 +5,8 @@ from remusgold.vouchers.models import Voucher
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from remusgold.consts import DECIMALS
 
@@ -32,7 +34,7 @@ not_found_response = openapi.Response(
     description='response if no such voucher exists',
 )
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class VoucherActivationView(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(

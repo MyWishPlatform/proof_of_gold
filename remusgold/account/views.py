@@ -40,6 +40,8 @@ from django_rest_resetpassword.serializers import EmailSerializer, PasswordToken
 from django_rest_resetpassword.models import ResetPasswordToken, clear_expired, get_password_reset_token_expiry_time, \
     get_password_reset_lookup_field
 from django_rest_resetpassword.signals import reset_password_token_created, pre_password_reset, post_password_reset
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from remusgold.account.models import AdvUser, ShippingAddress, BillingAddress, get_mail_connection
 from remusgold.account.serializers import PatchSerializer, PatchShippingAddressSerializer, PatchBillingAddressSerializer
@@ -122,7 +124,7 @@ crypto_response = openapi.Response(
     )
 )
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class GetView(APIView):
     '''
     view for getting and patching user info with validating passwords
@@ -209,6 +211,7 @@ def is_unique(field, item):
     else:
         return True
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     '''
     class for user's registration
@@ -283,7 +286,7 @@ class RegisterView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class ShippingView(APIView):
     '''
     view for getting and patching ShippingAddress
@@ -345,7 +348,7 @@ class ShippingView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class BillingView(APIView):
     '''
     view for getting and patching BillingAddress
@@ -425,7 +428,7 @@ def get_addresses(user):
         billing_address_id = None
     return shipping_address_id, billing_address_id
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class ObtainAuthTokenWithId(views.ObtainAuthToken):
     '''
     Base login view
@@ -538,7 +541,7 @@ def register_activate(request, sign):
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 @api_view(http_method_names=['POST'])
 def check_code(request):
     '''
@@ -587,7 +590,7 @@ class HttpRes(object):
             "message": args.get('message', 'Operation was Successful')
         }
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class ResetPasswordRequestToken(GenericAPIView):
     """
     An Api View which provides a method to request a password reset token based on an e-mail address

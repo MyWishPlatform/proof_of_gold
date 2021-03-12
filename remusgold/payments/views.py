@@ -8,6 +8,9 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.request import Request
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 
 from remusgold.payments.models import Payment, Order
 from remusgold.payments.paypal import GetOrder
@@ -107,7 +110,7 @@ class GetSinglePaymentView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class CreatePaymentView(APIView):
     '''
     Creating order, cancelling previous order if found.
