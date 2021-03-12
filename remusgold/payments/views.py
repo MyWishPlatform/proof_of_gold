@@ -173,6 +173,7 @@ class CreatePaymentView(APIView):
             res = check_paypal(paypal_id)
             if res != True:
                 return Response(res, status=status.HTTP_400_BAD_REQUEST)
+              
         #saving payment unique ShippingAddress if it is not saved in user info
         shipping_address = request.data.get('shipping_address')
         if shipping_address:

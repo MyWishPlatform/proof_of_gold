@@ -139,7 +139,7 @@ def process_overpayment(active_order, message):
 
 def process_underpayment(active_order, message):
     '''
-    after that, logic is similar to overpayment except returning full sum except transaction fee
+    logic is similar to overpayment except returning full sum except transaction fee
     '''
     currency = message['currency']
     if currency == 'ETH':

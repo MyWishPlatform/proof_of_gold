@@ -207,6 +207,7 @@ class UniqueView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+      
 @method_decorator(csrf_exempt, name='dispatch')
 class ReviewView(APIView):
     '''
@@ -297,7 +298,7 @@ class SearchView(APIView):
     ),
 )
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 @api_view(http_method_names=['POST'])
 def contact_us(request):
     '''
