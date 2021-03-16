@@ -179,11 +179,11 @@ class CreatePaymentView(APIView):
         if shipping_address:
             address = ShippingAddress()
             address.save()
-            order.shipping_address = address
-            order.save()
             serializer = PatchShippingAddressSerializer(address, data=request.data.get('shipping_address'), partial=True)
             if serializer.is_valid():
                 serializer.save()
+                order.shipping_address = address
+                order.save()
 
         #save items in order, calculate total amount and fix current rates
         for request in request_data.get('items'):
