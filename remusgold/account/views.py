@@ -725,3 +725,6 @@ class ResetPasswordValidateToken(GenericAPIView):
 
 reset_password_validate_token = ResetPasswordValidateToken.as_view()
 
+@api_view(http_method_names=['GET'])
+def total_id_count(request):
+    return Response(AdvUser.objects.all().last().id, status=status.HTTP_200_OK)
