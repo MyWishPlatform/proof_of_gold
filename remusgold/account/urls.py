@@ -4,7 +4,8 @@ from rest_framework.authtoken import views
 from django_rest_resetpassword.views import reset_password_confirm
 
 from remusgold.account.views import RegisterView, GetView, ShippingView, BillingView, ObtainAuthTokenWithId, \
-register_activate, reset_password_request_token, reset_password_validate_token, GetAddressesView, check_code, total_id_count
+    register_activate, reset_password_request_token, reset_password_validate_token, GetAddressesView, check_code, \
+    total_id_count, get_or_create_referral_code
 
 app_name = 'reset_password'
 
@@ -21,4 +22,5 @@ urlpatterns = [
     path('<str:token>/shipping/', ShippingView.as_view()),
     path('<str:token>/billing/', BillingView.as_view()),
     path('register/activate/<str:sign>', register_activate),
+    path('referral_code/', get_or_create_referral_code),
 ]

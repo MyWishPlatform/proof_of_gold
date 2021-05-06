@@ -1,5 +1,5 @@
 import json
-import datetime
+import uuid
 from datetime import timedelta
 import geoip2.database
 
@@ -279,18 +279,14 @@ class RegisterView(APIView):
         user.geolocation = geo
         user.save()
 
-        # ducatus address block (for the reference so far)
-        duc_address = f'voucher_{datetime.datetime.now().timestamp()}'
-        user.duc_address = duc_address
-        user.save()
-
         # referral block
-        duc_ref_address = request.COOKIES.get('referral')
-        print('REF ADDRESS', duc_ref_address, flush=True)
-        if duc_ref_address and duc_ref_address != user.duc_address:
-            user.duc_ref_address = duc_ref_address
+        ref_code = request.COOKIES.get('referral')
+        print('REF CODE', ref_code, flush=True)
+        if ref_code:
+            ref_user = AdvUser.objects.get(own_ref_code=ref_code)
+            user.ref_user = ref_user
             user.save()
-            print('REF ADDRESS', duc_ref_address, flush=True)
+            print('REF CODE', user.ref_user.own_ref_code, flush=True)
 
         #creating token
         token, created = Token.objects.get_or_create(user=user)
@@ -553,7 +549,7 @@ def register_activate(request, sign):
         shipping_address_id, billing_address_id = get_addresses(user)
         return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
                      'first_name': user.first_name, 'last_name': user.last_name,
-                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})  #TODO тут возвращать рефералку не надо ведь?
+                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
 
 @method_decorator(csrf_exempt, name='dispatch')
 @api_view(http_method_names=['POST'])
@@ -584,6 +580,28 @@ def check_code(request):
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
                     status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+@api_view(http_method_names=['GET'])
+def get_or_create_referral_code(request):
+    '''
+    generating referral code if not exists and returning it
+    '''
+    request_data = request.data
+    email = request_data.get('email')
+    try:
+        user = AdvUser.objects.get(email=email)
+    except Exception as e:
+        print(e, flush=True)
+        response_data = {'error': 'user with this email does not exist'}
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.own_ref_code is None:
+        ref_code = uuid.uuid4().hex[:25]
+        user.own_ref_code = ref_code
+        # catch exception if not unique?
+        user.save()
+    return Response({'email': user.email, 'own_ref_code': user.own_ref_code})
 
 '''
 Below till the end of file is rewritten logic from unworking lib https://pypi.org/project/django-rest-resetpassword/
