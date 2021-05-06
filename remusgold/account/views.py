@@ -1,4 +1,5 @@
 import json
+import datetime
 from datetime import timedelta
 import geoip2.database
 
@@ -278,6 +279,19 @@ class RegisterView(APIView):
         user.geolocation = geo
         user.save()
 
+        # ducatus address block (for the reference so far)
+        duc_address = f'voucher_{datetime.datetime.now().timestamp()}'
+        user.duc_address = duc_address
+        user.save()
+
+        # referral block
+        duc_ref_address = request.COOKIES.get('referral')
+        print('REF ADDRESS', duc_ref_address, flush=True)
+        if duc_ref_address and duc_ref_address != user.duc_address:
+            user.duc_ref_address = duc_ref_address
+            user.save()
+            print('REF ADDRESS', duc_ref_address, flush=True)
+
         #creating token
         token, created = Token.objects.get_or_create(user=user)
         print(token)
@@ -539,7 +553,7 @@ def register_activate(request, sign):
         shipping_address_id, billing_address_id = get_addresses(user)
         return Response({'token': token.key, 'username': username, 'id': user.id, 'email': user.email,
                      'first_name': user.first_name, 'last_name': user.last_name,
-                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})
+                     'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id})  #TODO тут возвращать рефералку не надо ведь?
 
 @method_decorator(csrf_exempt, name='dispatch')
 @api_view(http_method_names=['POST'])
