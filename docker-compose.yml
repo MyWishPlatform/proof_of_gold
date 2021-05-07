@@ -47,6 +47,15 @@ services:
     restart: unless-stopped
     networks:
       remusgold-net:
+  gold_checker:
+    build:
+      context: .
+      dockerfile: dockerfiles/gold_checker.Dockerfile
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      remusgold-net:
   lottery_checker:
     build:
       context: .

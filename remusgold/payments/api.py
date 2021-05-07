@@ -77,7 +77,7 @@ def process_correct_payment(active_order):
         item.reserved -= payment.quantity
         item.save()
 
-        usd_amount += item.price * payment.quantity * item.ducatus_bonus / 100
+        usd_amount += (item.price * payment.quantity) / (1 + item.ducatus_bonus / 100) * item.ducatus_bonus
         html_break = item.name.split('–')
         print(html_break)
 
