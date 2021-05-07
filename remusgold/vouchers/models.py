@@ -16,7 +16,7 @@ class Voucher(models.Model):
     (currently hardcoded in voucher creation (function process_correct_payment() in payments/api.py))
     '''
     user = models.ForeignKey('account.AdvUser', on_delete=models.CASCADE)
-    payment = models.OneToOneField('payments.Payment', on_delete=models.CASCADE, null=True)
+    payment = models.ForeignKey('payments.Payment', on_delete=models.CASCADE, null=True)
     activation_code = models.CharField(max_length=50, unique=True, default=secrets.token_urlsafe)
     usd_amount = models.DecimalField(max_digits=100, decimal_places=2)
     is_used = models.BooleanField(default=False)

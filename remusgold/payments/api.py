@@ -6,7 +6,7 @@ from remusgold.consts import DECIMALS
 from remusgold.transfers.api import eth_return_transfer, btc_return_transfer
 from remusgold.account.models import get_mail_connection
 from remusgold.templates.email.payment_letter_body2 import order_body, item_body, ending_body
-from remusgold.templates.email.referral_letter import referral_body
+from remusgold.templates.email.referral_letter_DEV import referral_body
 from django.core.mail import send_mail
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD,\
     REF_BONUS_PERCENT
