@@ -52,7 +52,6 @@ from remusgold.templates.email.security_letter_body2 import security_body
 from remusgold.templates.email.password_letter_body2 import password_body
 
 
-
 signer = Signer()
 
 register_response = openapi.Response(
@@ -231,7 +230,7 @@ class RegisterView(APIView):
         ),
         responses={200: register_response, 400: 'Password is not valid'},
     )
-    def post(self, request):
+    def post(self, request, ref_code=None):
         request_data_init = request.data
         try:
             username = request_data_init['username']
@@ -269,6 +268,20 @@ class RegisterView(APIView):
         user.generate_keys()
         user.save()
 
+        # referral block
+        # ref_code = request.COOKIES.get('referral')
+        if ref_code:
+            try:
+                ref_user = AdvUser.objects.get(own_ref_code=ref_code)
+            except Exception as e:
+                print(e, flush=True)
+                response_data = {'error': 'insufficient referral code'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            user.ref_user = ref_user
+            user.save()
+            print('REF CODE', user.ref_user.own_ref_code, flush=True)
+
         #geolocation block
         agent = request.META.get('HTTP_USER_AGENT')
         ip = get_client_ip(request)
@@ -278,15 +291,6 @@ class RegisterView(APIView):
         user.agent = agent
         user.geolocation = geo
         user.save()
-
-        # referral block
-        ref_code = request.COOKIES.get('referral')
-        print('REF CODE', ref_code, flush=True)
-        if ref_code:
-            ref_user = AdvUser.objects.get(own_ref_code=ref_code)
-            user.ref_user = ref_user
-            user.save()
-            print('REF CODE', user.ref_user.own_ref_code, flush=True)
 
         #creating token
         token, created = Token.objects.get_or_create(user=user)
@@ -581,25 +585,28 @@ def check_code(request):
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
                     status=status.HTTP_200_OK)
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 @api_view(http_method_names=['GET'])
-def get_or_create_referral_code(request):
+def get_or_create_referral_code(request, token):
     '''
     generating referral code if not exists and returning it
     '''
-    request_data = request.data
-    email = request_data.get('email')
+    token = Token.objects.get(key=token)
     try:
-        user = AdvUser.objects.get(email=email)
+        user = AdvUser.objects.get(id=token.user_id)
     except Exception as e:
         print(e, flush=True)
-        response_data = {'error': 'user with this email does not exist'}
+        response_data = {'error': 'bad auth token'}
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
     if user.own_ref_code is None:
         ref_code = uuid.uuid4().hex[:25]
+        # check if not unique
+        # may be optimized with catching exception
+        while AdvUser.objects.get(own_ref_code=ref_code):
+            ref_code = uuid.uuid4().hex[:25]
+
         user.own_ref_code = ref_code
-        # catch exception if not unique?
         user.save()
     return Response({'email': user.email, 'own_ref_code': user.own_ref_code})
 
