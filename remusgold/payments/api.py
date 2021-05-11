@@ -79,7 +79,7 @@ def process_correct_payment(active_order):
         item.reserved -= payment.quantity
         item.save()
 
-        usd_amount += item.price * payment.quantity * item.ducatus_bonus / 100
+        usd_amount += (item.price * payment.quantity) / (1 + item.ducatus_bonus / 100) * item.ducatus_bonus
         html_break = item.name.split('–')
         print(html_break)
 
@@ -99,7 +99,6 @@ def process_correct_payment(active_order):
     user = AdvUser.objects.get(id=active_order.user_id)
 
     connection = get_mail_connection()
-
     if not active_order.shipping_address:
         shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
     else:
