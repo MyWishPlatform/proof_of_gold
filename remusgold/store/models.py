@@ -1,5 +1,8 @@
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
+
 from .utilities import get_timestamp_path
+from remusgold.rates.models import UsdRate
 
 # Create your models here.
 class Group(models.Model):
@@ -25,11 +28,21 @@ class Item(models.Model):
     reserved = models.IntegerField(default=0)
     sold = models.IntegerField(default=0)
     price = models.FloatField()
+    weight = models.IntegerField()
     description = models.CharField(max_length=1000, null=True, blank=True)
     winner = models.CharField(max_length=254, default=None, null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def update_price(self):
+        try:
+            gold_price = UsdRate.objects.get(currency='XAU').rate
+        except ObjectDoesNotExist:
+            return 'Can not get gold rate from db'
+        self.price = self.weight * float(gold_price) * 1.03 * (1 + self.ducatus_bonus/100)
+        self.save()
+        return 'price updated'
 
 class Review(models.Model):
     '''
