@@ -603,7 +603,7 @@ def get_or_create_referral_code(request, token):
         ref_code = uuid.uuid4().hex[:25]
         # check if not unique
         # may be optimized with catching exception
-        while AdvUser.objects.get(own_ref_code=ref_code):
+        while AdvUser.objects.filter(own_ref_code=ref_code).first():
             ref_code = uuid.uuid4().hex[:25]
 
         user.own_ref_code = ref_code
