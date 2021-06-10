@@ -23,5 +23,5 @@ urlpatterns = [
     path('login', ObtainAuthTokenWithId.as_view()),
     path('<str:token>/shipping/', ShippingView.as_view()),
     path('<str:token>/billing/', BillingView.as_view()),
-    path('register/activate/<str:sign>', register_activate)
+    path('register/activate/<str:sign>', register_activate),
 ]

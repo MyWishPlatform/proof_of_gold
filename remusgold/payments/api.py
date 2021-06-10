@@ -97,12 +97,11 @@ def process_correct_payment(active_order):
     voucher.activation_code = 'PG-'+voucher.activation_code
     voucher.save()
     user = AdvUser.objects.get(id=active_order.user_id)
-
-    connection = get_mail_connection()
     if not active_order.shipping_address:
         shipping = ShippingAddress.objects.get(id=user.shipping_address_id)
     else:
         shipping = active_order.shipping_address
+    connection = get_mail_connection()
     if shipping.county:
         delivery_address = shipping.country + ', ' + shipping.county + ', ' + shipping.town + ', ' + shipping.full_address
     else:
