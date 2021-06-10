@@ -6,8 +6,10 @@ from remusgold.consts import DECIMALS
 from remusgold.transfers.api import eth_return_transfer, btc_return_transfer
 from remusgold.account.models import get_mail_connection
 from remusgold.templates.email.payment_letter_body2 import order_body, item_body, ending_body
+from remusgold.templates.email.referral_letter_DEV import referral_body
 from django.core.mail import send_mail
-from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
+from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD,\
+    REF_BONUS_PERCENT
 
 
 
@@ -77,7 +79,7 @@ def process_correct_payment(active_order):
         item.reserved -= payment.quantity
         item.save()
 
-        usd_amount += item.price * payment.quantity * item.ducatus_bonus / 100
+        usd_amount += (item.price * payment.quantity) / (1 + item.ducatus_bonus / 100) * item.ducatus_bonus
         html_break = item.name.split('–')
         print(html_break)
 
@@ -121,6 +123,29 @@ def process_correct_payment(active_order):
         html_message=html_body + html_items + html_ending,
     )
 
+    # referral voucher block
+    if user.ref_user:
+        ref_usd_amount = usd_amount * REF_BONUS_PERCENT
+        ref_voucher = Voucher(
+            payment=payments[0],                                    # bind to the same payment
+            user=AdvUser.objects.get(id=user.ref_user.id),
+            usd_amount=ref_usd_amount)
+        ref_voucher.save()
+        ref_voucher.activation_code = 'PG-' + ref_voucher.activation_code
+        ref_voucher.save()
+
+        ref_html_body = referral_body.format(code=ref_voucher.activation_code)
+
+        send_mail(
+            'New Referral Transfer',
+            '',
+            EMAIL_HOST_USER,
+            [user.ref_user.email],
+            connection=connection,
+            html_message=ref_html_body,
+        )
+
+
 def process_overpayment(active_order, message):
     '''
     return overpayment after processing correct payment.
@@ -136,6 +161,7 @@ def process_overpayment(active_order, message):
         return_transfer = btc_return_transfer(active_order, int(delta), message)
     active_order.status = 'OVERPAYMENT'
     active_order.save()
+
 
 def process_underpayment(active_order, message):
     '''

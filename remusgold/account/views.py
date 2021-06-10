@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import timedelta
 import geoip2.database
 
@@ -49,7 +50,6 @@ from remusgold.account.models import get_mail_connection
 from remusgold.settings import EMAIL_HOST_USER, EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_PASSWORD
 from remusgold.templates.email.security_letter_body2 import security_body
 from remusgold.templates.email.password_letter_body2 import password_body
-
 
 
 signer = Signer()
@@ -230,7 +230,7 @@ class RegisterView(APIView):
         ),
         responses={200: register_response, 400: 'Password is not valid'},
     )
-    def post(self, request):
+    def post(self, request, ref_code=None):
         request_data_init = request.data
         try:
             username = request_data_init['username']
@@ -267,6 +267,20 @@ class RegisterView(APIView):
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         user.generate_keys()
         user.save()
+
+        # referral block
+        # ref_code = request.COOKIES.get('referral')
+        if ref_code:
+            try:
+                ref_user = AdvUser.objects.get(own_ref_code=ref_code)
+            except Exception as e:
+                print(e, flush=True)
+                response_data = {'error': 'insufficient referral code'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            user.ref_user = ref_user
+            user.save()
+            print('REF CODE', user.ref_user.own_ref_code, flush=True)
 
         #geolocation block
         agent = request.META.get('HTTP_USER_AGENT')
@@ -570,6 +584,31 @@ def check_code(request):
                      'first_name': user.first_name, 'last_name': user.last_name,
                      'billing_address_id': billing_address_id, 'shipping_adress_id': shipping_address_id},
                     status=status.HTTP_200_OK)
+
+
+@api_view(http_method_names=['GET'])
+def get_or_create_referral_code(request, token):
+    '''
+    generating referral code if not exists and returning it
+    '''
+    token = Token.objects.get(key=token)
+    try:
+        user = AdvUser.objects.get(id=token.user_id)
+    except Exception as e:
+        print(e, flush=True)
+        response_data = {'error': 'bad auth token'}
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.own_ref_code is None:
+        ref_code = uuid.uuid4().hex[:25]
+        # check if not unique
+        # may be optimized with catching exception
+        while AdvUser.objects.filter(own_ref_code=ref_code).first():
+            ref_code = uuid.uuid4().hex[:25]
+
+        user.own_ref_code = ref_code
+        user.save()
+    return Response({'email': user.email, 'own_ref_code': user.own_ref_code})
 
 '''
 Below till the end of file is rewritten logic from unworking lib https://pypi.org/project/django-rest-resetpassword/

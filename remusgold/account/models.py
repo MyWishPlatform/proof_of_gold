@@ -26,7 +26,7 @@ class AdvUser(AbstractUser):
     '''
     is_activated = models.BooleanField(default=False)
     email = models.EmailField(verbose_name='email address',
-    max_length=255, unique=True)
+                              max_length=255, unique=True)
     first_name = models.CharField(max_length=20, blank=True)
     last_name = models.CharField(max_length=20, blank=True)
     billing_address = models.OneToOneField('BillingAddress', on_delete=models.SET_NULL, blank=True, null=True)
@@ -36,6 +36,8 @@ class AdvUser(AbstractUser):
     agent = models.CharField(max_length=150, null=True, default=None)
     geolocation = models.CharField(max_length=150, null=True, default=None)
     code = models.CharField(max_length=6, null=True, default=None, blank=True)
+    own_ref_code = models.CharField(max_length=25, null=True, default=None, blank=True, unique=True)
+    ref_user = models.ForeignKey('self', on_delete=models.SET_DEFAULT, default=None, null=True, blank=True)
 
     def generate_keys(self):
         eth_btc_root_pub_key = get_root_key()
