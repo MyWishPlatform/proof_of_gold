@@ -40,7 +40,7 @@ class Item(models.Model):
             gold_price = UsdRate.objects.get(currency='XAU').rate
         except ObjectDoesNotExist:
             return 'Can not get gold rate from db'
-        self.price = self.weight * float(gold_price) * 1.03 * (1 + self.ducatus_bonus/100)
+        self.price = round(self.weight * float(gold_price) * 1.03 * (1 + self.ducatus_bonus/100), 2)
         self.save()
         return 'price updated'
 
